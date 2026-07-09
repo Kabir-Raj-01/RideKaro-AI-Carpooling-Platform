@@ -1,0 +1,2726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>RideKaro — AI Carpooling Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+:root{
+  --bg:#04090f;--bg2:#070e1a;--bg3:#0a1525;--card:#08111e;--card2:#0c1929;
+  --border:#102035;--border2:#1a3555;--border3:#234570;
+  --teal:#00d4b4;--teal2:#00a88f;--teal3:#007a69;
+  --blue:#4f8ef7;--blue2:#2563eb;
+  --purple:#9d6efd;--amber:#f0a500;--red:#f04060;--green:#20b850;
+  --orange:#f07030;--pink:#e040a0;
+  --text:#d8e8f8;--text2:#a0b8d0;--muted:#506880;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:12px;--r2:8px;--r3:5px;
+  --glow-teal:0 0 24px rgba(0,212,180,.13);
+  --glow-blue:0 0 24px rgba(79,142,247,.13);
+  --sidebar-w:310px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border3);border-radius:2px}
+
+/* ── HEADER ── */
+header{
+  position:sticky;top:0;z-index:400;height:54px;
+  background:rgba(4,9,15,.97);backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 18px;gap:14px;
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex-shrink:0}
+.logo-icon{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,var(--teal),var(--blue));
+  display:grid;place-items:center;font-size:16px;flex-shrink:0;
+  box-shadow:0 2px 12px rgba(0,212,180,.3);
+}
+.logo-name{font-weight:800;font-size:.95rem;letter-spacing:-.03em;background:linear-gradient(90deg,var(--teal),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:.56rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.nav{display:flex;gap:1px;background:var(--bg3);border-radius:8px;padding:3px;overflow-x:auto}
+.nbtn{padding:5px 12px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:.73rem;font-weight:500;border-radius:6px;cursor:pointer;transition:all .18s;white-space:nowrap}
+.nbtn.on{background:var(--card2);color:var(--teal);box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.nbtn:hover:not(.on){color:var(--text)}
+.hbadge{font-size:.64rem;padding:4px 10px;border-radius:20px;background:rgba(0,212,180,.08);border:1px solid rgba(0,212,180,.2);color:var(--teal);font-family:var(--mono);white-space:nowrap;margin-left:auto}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px;animation:pulse 2s infinite}
+.notif-btn{position:relative;background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.1rem;padding:4px;transition:color .2s;flex-shrink:0}
+.notif-btn:hover{color:var(--text)}
+.notif-badge{position:absolute;top:0;right:0;width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;font-size:.55rem;font-weight:700;display:grid;place-items:center;border:1.5px solid var(--bg)}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(32,184,80,.4)}50%{opacity:.6;box-shadow:0 0 0 4px rgba(32,184,80,0)}}
+
+/* ── PAGE SYSTEM ── */
+.page{display:none}.page.on{display:block}
+
+/* ══ DASHBOARD PAGE ══ */
+.dash-layout{display:grid;grid-template-columns:var(--sidebar-w) 1fr;min-height:calc(100vh - 54px)}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;max-height:calc(100vh - 54px);position:sticky;top:54px}
+.sbs{border-bottom:1px solid var(--border);padding:13px 14px}
+.sbl{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;display:flex;align-items:center;gap:8px}
+.sbl::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* FORMS */
+.fg{margin-bottom:6px}
+label{font-size:.69rem;color:var(--text2);display:block;margin-bottom:2px;font-weight:500}
+input,select{width:100%;padding:6px 9px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r3);color:var(--text);font-family:var(--font);font-size:.79rem;transition:all .2s;outline:none}
+input:focus,select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,212,180,.1)}
+select option{background:var(--bg3)}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+
+/* BUTTONS */
+.btn{padding:7px 13px;border:none;border-radius:var(--r3);font-family:var(--font);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .18s;width:100%}
+.bteal{background:var(--teal);color:#000}.bteal:hover{background:var(--teal2);transform:translateY(-1px)}
+.bline{background:transparent;border:1px solid var(--border2);color:var(--text2)}.bline:hover{border-color:var(--teal);color:var(--teal)}
+.bred{background:rgba(240,64,96,.1);border:1px solid rgba(240,64,96,.3);color:var(--red)}.bred:hover{background:rgba(240,64,96,.2)}
+.bblue{background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.3);color:var(--blue)}.bblue:hover{background:rgba(79,142,247,.2)}
+.bpurple{background:rgba(157,110,253,.12);border:1px solid rgba(157,110,253,.3);color:var(--purple)}.bpurple:hover{background:rgba(157,110,253,.2)}
+.bgreen{background:rgba(32,184,80,.12);border:1px solid rgba(32,184,80,.3);color:var(--green)}.bgreen:hover{background:rgba(32,184,80,.2)}
+.brun{background:linear-gradient(135deg,var(--teal),var(--blue));color:#000;font-size:.85rem;font-weight:700;padding:10px;border-radius:var(--r2);margin-top:3px;box-shadow:0 4px 16px rgba(0,212,180,.2)}
+.brun:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,212,180,.3)}
+.brun:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.bsm{padding:5px 11px;font-size:.72rem;width:auto}
+
+/* TABS */
+.tabs{display:flex;background:var(--bg3);border-radius:var(--r3);padding:3px;gap:2px;margin-bottom:9px}
+.tab{flex:1;padding:5px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:.72rem;border-radius:3px;cursor:pointer;transition:all .15s}
+.tab.on{background:var(--card);color:var(--teal)}
+
+/* USER CARDS */
+.ulist{display:flex;flex-direction:column;gap:4px;max-height:170px;overflow-y:auto}
+.ucard{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r3);padding:6px 8px;font-size:.74rem;transition:border .15s}
+.ucard:hover{border-color:var(--border2)}
+.uav{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.68rem;flex-shrink:0}
+.uav-d{background:rgba(79,142,247,.18);color:var(--blue)}
+.uav-p{background:rgba(157,110,253,.18);color:var(--purple)}
+.uinfo{flex:1;min-width:0}
+.uname{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.76rem}
+.uroute{color:var(--muted);font-size:.63rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.udel{background:none;border:none;color:var(--muted);cursor:pointer;padding:2px 4px;border-radius:3px;transition:color .15s}
+.udel:hover{color:var(--red)}
+.bdg{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;font-size:.63rem;font-weight:700}
+.bdg-b{background:rgba(79,142,247,.18);color:var(--blue)}
+.bdg-p{background:rgba(157,110,253,.18);color:var(--purple)}
+
+/* ── MAIN AREA ── */
+.main{overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:border .2s}
+.card:hover{border-color:var(--border2)}
+.card-glow{box-shadow:var(--glow-teal)}
+.ctitle{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.ctitle .ico{font-size:.85rem}
+.ctitle .cright{margin-left:auto;font-size:.63rem;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0}
+
+/* STATS */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.sc{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:11px;position:relative;overflow:hidden;transition:transform .2s,border .2s}
+.sc:hover{transform:translateY(-2px);border-color:var(--border2)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--teal)}
+.sc.sb::before{background:var(--blue)}.sc.sp::before{background:var(--purple)}
+.sc.sa::before{background:var(--amber)}.sc.sg::before{background:var(--green)}
+.sc.sr::before{background:var(--red)}.sc.so::before{background:var(--orange)}
+.sc.spk::before{background:var(--pink)}
+.sv{font-size:1.35rem;font-weight:800;font-family:var(--mono);line-height:1;margin-bottom:3px}
+.sl{font-size:.62rem;color:var(--muted);font-weight:500}
+
+/* MAP */
+#map-wrap{width:100%;height:390px;background:var(--bg2);border-radius:var(--r2);border:1px solid var(--border);position:relative;overflow:hidden}
+#map-svg{width:100%;height:100%}
+.mleg{position:absolute;bottom:9px;left:9px;background:rgba(4,9,15,.93);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;font-size:.63rem;pointer-events:none;display:flex;flex-direction:column;gap:3px}
+.ml-row{display:flex;align-items:center;gap:5px}
+.ml-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ml-line{width:14px;height:2px;border-radius:1px;flex-shrink:0}
+
+/* PROGRESS */
+.progwrap{margin-top:7px}
+.progbar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.progfill{height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--blue));transition:width .4s ease;border-radius:2px}
+.proglbl{font-size:.63rem;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+
+/* DEMAND */
+.dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.dzone{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:10px;text-align:center;transition:border .2s}
+.dzone:hover{border-color:var(--border2)}
+.dname{font-size:.62rem;color:var(--muted);margin-bottom:4px;text-transform:capitalize;font-weight:500}
+.dlvl{font-size:.86rem;font-weight:700;margin-bottom:2px}
+.dh{color:var(--red)}.dm{color:var(--amber)}.dl{color:var(--green)}
+.deta{font-size:.62rem;color:var(--muted);margin-bottom:4px}
+.drec{font-size:.6rem;color:var(--text2);margin-top:4px;line-height:1.4;text-align:left}
+.pbars{display:flex;flex-direction:column;gap:2px}
+.pbrow{display:flex;align-items:center;gap:4px;font-size:.58rem}
+.pbl{width:22px;text-align:right;color:var(--muted)}
+.pbtrack{flex:1;height:3px;background:var(--bg);border-radius:2px;overflow:hidden}
+.pbfill{height:100%;border-radius:2px;transition:width .6s ease}
+.pb-low{background:var(--green)}.pb-medium{background:var(--amber)}.pb-high{background:var(--red)}
+
+/* RIDE GROUPS */
+.rgcard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:9px;transition:border .2s,transform .2s}
+.rgcard:hover{border-color:var(--border2);transform:translateX(2px)}
+.rghead{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-bottom:1px solid var(--border)}
+.rgid{font-family:var(--mono);font-size:.67rem;color:var(--teal)}
+.rgst{font-size:.62rem;padding:2px 7px;border-radius:10px;font-weight:600;background:rgba(32,184,80,.12);border:1px solid rgba(32,184,80,.25);color:var(--green)}
+.rgbody{padding:11px 13px;display:grid;grid-template-columns:1.2fr 1fr;gap:11px}
+.rgl{font-size:.6rem;color:var(--muted);font-weight:600;margin-bottom:2px;text-transform:uppercase;letter-spacing:.05em}
+.rgv{font-size:.83rem;font-weight:600}
+.rgroute{grid-column:1/-1;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:5px 9px;font-family:var(--mono);font-size:.62rem;color:var(--muted);overflow-x:auto;white-space:nowrap}
+.rgarr{color:var(--teal);margin:0 3px}
+.ptags{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}
+.ptag{font-size:.62rem;padding:2px 7px;border-radius:9px;background:rgba(157,110,253,.1);border:1px solid rgba(157,110,253,.2);color:var(--purple)}
+.sbar{height:3px;background:var(--bg);border-radius:2px;overflow:hidden;margin-top:3px}
+.sfill{height:100%;border-radius:2px}
+.co2badge{display:inline-block;font-size:.6rem;padding:2px 6px;border-radius:9px;background:rgba(32,184,80,.1);border:1px solid rgba(32,184,80,.2);color:var(--green);margin-top:4px}
+
+/* AGENT TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:0;position:relative;padding-left:28px}
+.timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,var(--teal),var(--border))}
+.tl-item{position:relative;padding:9px 0 9px 16px;animation:tlFade .4s ease}
+@keyframes tlFade{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.tl-dot{position:absolute;left:-21px;width:11px;height:11px;border-radius:50%;border:2px solid var(--border2);background:var(--bg2);top:13px;flex-shrink:0}
+.tl-dot.action{border-color:var(--teal);background:rgba(0,212,180,.15)}
+.tl-dot.decision{border-color:var(--blue);background:rgba(79,142,247,.15)}
+.tl-dot.warning{border-color:var(--amber);background:rgba(240,165,0,.15)}
+.tl-dot.error{border-color:var(--red);background:rgba(240,64,96,.15)}
+.tl-dot.info{border-color:var(--purple);background:rgba(157,110,253,.15)}
+.tl-header{display:flex;align-items:center;gap:7px;margin-bottom:2px}
+.tl-icon{font-size:.82rem}
+.tl-agent{font-size:.61rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tl-ts{font-size:.6rem;color:var(--muted);font-family:var(--mono);margin-left:auto}
+.tl-title{font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:2px}
+.tl-detail{font-size:.72rem;color:var(--text2);line-height:1.5}
+.tl-data{margin-top:5px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:6px 9px;font-family:var(--mono);font-size:.62rem;color:var(--text2);max-height:90px;overflow-y:auto}
+.tl-toggle{font-size:.6rem;color:var(--teal);cursor:pointer;margin-top:3px;display:inline-block}
+
+/* AGENT CARDS */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px}
+.agent-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;position:relative;overflow:hidden;transition:all .2s}
+.agent-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.agent-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.ac-env::after{background:var(--green)}.ac-traffic::after{background:var(--amber)}
+.ac-pred::after{background:var(--purple)}.ac-match::after{background:var(--blue)}
+.ac-nego::after{background:var(--orange)}.ac-ga::after{background:var(--teal)}
+.ac-route::after{background:var(--blue)}.ac-csp::after{background:var(--amber)}
+.ac-safe::after{background:var(--red)}.ac-cost::after{background:var(--green)}
+.ac-orch::after{background:linear-gradient(90deg,var(--teal),var(--blue))}
+.agent-icon{font-size:1.3rem;margin-bottom:5px}
+.agent-name{font-size:.76rem;font-weight:700;margin-bottom:2px}
+.agent-role{font-size:.65rem;color:var(--muted);line-height:1.4;margin-bottom:5px}
+.agent-stat{font-size:.66rem;color:var(--text2);font-family:var(--mono)}
+.agent-algo{display:inline-block;font-size:.58rem;padding:2px 6px;border-radius:8px;background:rgba(0,212,180,.1);border:1px solid rgba(0,212,180,.2);color:var(--teal);margin-top:3px}
+
+/* ALGO VIS */
+.alayout{padding:16px;display:flex;flex-direction:column;gap:14px}
+.acontrols{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}
+.alomap{width:100%;height:380px;background:var(--bg2);border-radius:var(--r2);border:1px solid var(--border);position:relative;overflow:hidden}
+#algo-svg{width:100%;height:100%}
+.atrace{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:9px;max-height:140px;overflow-y:auto;font-family:var(--mono);font-size:.67rem;display:flex;flex-direction:column;gap:2px}
+.tr-v{color:var(--teal)}.tr-f{color:var(--blue)}.tr-b{color:var(--orange)}
+.tr-l{color:var(--muted)}.tr-mx{color:var(--green)}.tr-mn{color:var(--red)}.tr-p{color:var(--amber);font-weight:600}
+.btbl{width:100%;border-collapse:collapse;font-size:.76rem}
+.btbl th{text-align:left;padding:7px 9px;color:var(--muted);font-size:.61rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+.btbl td{padding:7px 9px;border-bottom:1px solid rgba(16,32,53,.7);font-family:var(--mono)}
+.btbl tr:hover td{background:rgba(255,255,255,.015)}
+.best{color:var(--teal);font-weight:700}
+.algobadge{font-size:.58rem;padding:1px 5px;border-radius:8px;background:rgba(0,212,180,.12);color:var(--teal);border:1px solid rgba(0,212,180,.25);margin-left:4px}
+#ab-svg{width:100%;min-height:280px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);display:block}
+.step-counter{display:flex;align-items:center;gap:9px;font-size:.76rem;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:7px 12px}
+.step-val{font-family:var(--mono);font-weight:700;color:var(--teal);font-size:.95rem}
+
+/* ML */
+.mlayout{padding:16px;display:flex;flex-direction:column;gap:14px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.mrow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(16,32,53,.7);font-size:.78rem}
+.mrow:last-child{border-bottom:none}
+.mk{color:var(--text2)}.mv{font-family:var(--mono);font-weight:600}
+.fbars{display:flex;flex-direction:column;gap:4px;margin-top:5px}
+.frow{display:flex;align-items:center;gap:6px;font-size:.69rem}
+.fn{width:110px;text-align:right;color:var(--muted);flex-shrink:0}
+.ftrack{flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden}
+.ffill{height:100%;border-radius:3px;transition:width .7s ease}
+.fpct{width:32px;font-family:var(--mono);font-size:.62rem;color:var(--muted)}
+.cm{display:grid;grid-template-columns:1fr 1fr;gap:3px;width:140px;margin:9px auto}
+.cmcell{padding:10px 5px;text-align:center;border-radius:var(--r3);font-family:var(--mono);font-weight:700;font-size:.88rem}
+.cm-tp,.cm-tn{background:rgba(32,184,80,.15);color:var(--green)}
+.cm-fp,.cm-fn{background:rgba(240,64,96,.15);color:var(--red)}
+canvas{display:block;border-radius:var(--r2)}
+#corr-cv,#pca-cv,#hist-cv,#hour-cv,#ga-cv{background:var(--bg2);border:1px solid var(--border)}
+#cluster-svg{width:100%;height:260px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);display:block}
+.pform{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:12px}
+.pres{margin-top:7px;padding:8px 12px;border-radius:var(--r2);font-weight:700;font-size:.9rem;text-align:center;display:none}
+.pr-y{background:rgba(32,184,80,.12);border:1px solid rgba(32,184,80,.28);color:var(--green)}
+.pr-n{background:rgba(240,64,96,.12);border:1px solid rgba(240,64,96,.28);color:var(--red)}
+
+/* RESULTS PAGE */
+.rlayout{padding:16px;display:flex;flex-direction:column;gap:14px}
+.atbl{width:100%;border-collapse:collapse;font-size:.77rem}
+.atbl th{text-align:left;padding:6px 9px;color:var(--muted);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+.atbl td{padding:7px 9px;border-bottom:1px solid rgba(16,32,53,.7)}
+.atbl tr:hover td{background:rgba(255,255,255,.015)}
+.aw{color:var(--teal);font-weight:700;font-family:var(--mono)}
+.ab{font-size:.58rem;padding:1px 5px;border-radius:7px;background:rgba(0,212,180,.12);color:var(--teal);border:1px solid rgba(0,212,180,.25);margin-left:4px}
+.charts2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.imgcard{width:100%;border-radius:var(--r2);border:1px solid var(--border)}
+.logbox{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:10px;max-height:210px;overflow-y:auto;font-family:var(--mono);font-size:.67rem;display:flex;flex-direction:column;gap:2px}
+.lo{color:var(--teal)}.lb{color:var(--blue)}.ly{color:var(--amber)}.lg{color:var(--green)}.lm{color:var(--muted)}
+.unm{display:flex;align-items:center;gap:7px;padding:6px 9px;background:rgba(240,64,96,.06);border:1px solid rgba(240,64,96,.18);border-radius:var(--r3);font-size:.75rem;margin-bottom:4px}
+
+/* SAFETY/NEGO/COST */
+.stbl{width:100%;border-collapse:collapse;font-size:.75rem}
+.stbl th{text-align:left;padding:6px 9px;color:var(--muted);font-size:.61rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+.stbl td{padding:6px 9px;border-bottom:1px solid rgba(16,32,53,.6);font-family:var(--mono);font-size:.72rem}
+.stbl tr:last-child td{border-bottom:none}
+.stbl tr:hover td{background:rgba(255,255,255,.012)}
+.tag-agree{background:rgba(32,184,80,.12);border:1px solid rgba(32,184,80,.25);color:var(--green);font-size:.61rem;padding:2px 6px;border-radius:8px}
+.tag-reject{background:rgba(240,64,96,.12);border:1px solid rgba(240,64,96,.25);color:var(--red);font-size:.61rem;padding:2px 6px;border-radius:8px}
+.tag-warn{background:rgba(240,165,0,.1);border:1px solid rgba(240,165,0,.25);color:var(--amber);font-size:.61rem;padding:2px 6px;border-radius:8px}
+
+/* PILLS */
+.pill{display:inline-block;font-size:.61rem;padding:2px 7px;border-radius:10px;font-weight:600;margin:2px}
+.pt{background:rgba(0,212,180,.1);border:1px solid rgba(0,212,180,.25);color:var(--teal)}
+.pb2{background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.25);color:var(--blue)}
+.pp{background:rgba(157,110,253,.1);border:1px solid rgba(157,110,253,.25);color:var(--purple)}
+.pa{background:rgba(240,165,0,.1);border:1px solid rgba(240,165,0,.25);color:var(--amber)}
+.pg{background:rgba(32,184,80,.1);border:1px solid rgba(32,184,80,.25);color:var(--green)}
+.pr2{background:rgba(240,64,96,.1);border:1px solid rgba(240,64,96,.25);color:var(--red)}
+.po{background:rgba(240,112,48,.1);border:1px solid rgba(240,112,48,.25);color:var(--orange)}
+
+/* DATABASE PAGE */
+.dblayout{padding:16px;display:flex;flex-direction:column;gap:14px}
+.db-tabs{display:flex;gap:1px;background:var(--bg3);border-radius:8px;padding:3px;margin-bottom:14px;flex-wrap:wrap}
+.db-tab{padding:6px 14px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:.73rem;border-radius:5px;cursor:pointer;transition:all .18s;white-space:nowrap}
+.db-tab.on{background:var(--card2);color:var(--teal)}
+.db-tab:hover:not(.on){color:var(--text)}
+
+/* DATA TABLE */
+.dtable-wrap{overflow-x:auto;border-radius:var(--r2);border:1px solid var(--border)}
+.dtable{width:100%;border-collapse:collapse;font-size:.77rem}
+.dtable th{text-align:left;padding:8px 12px;color:var(--muted);font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;background:var(--bg3);border-bottom:1px solid var(--border);white-space:nowrap}
+.dtable td{padding:9px 12px;border-bottom:1px solid rgba(16,32,53,.6);vertical-align:middle}
+.dtable tr:last-child td{border-bottom:none}
+.dtable tr:hover td{background:rgba(255,255,255,.012)}
+.dtable td.mono{font-family:var(--mono);font-size:.73rem}
+
+/* STATUS BADGES */
+.sbadge{display:inline-flex;align-items:center;gap:4px;font-size:.62rem;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap}
+.sb-scheduled{background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.25);color:var(--blue)}
+.sb-active{background:rgba(0,212,180,.1);border:1px solid rgba(0,212,180,.25);color:var(--teal)}
+.sb-completed{background:rgba(32,184,80,.1);border:1px solid rgba(32,184,80,.25);color:var(--green)}
+.sb-cancelled{background:rgba(240,64,96,.1);border:1px solid rgba(240,64,96,.25);color:var(--red)}
+.sb-pending{background:rgba(240,165,0,.1);border:1px solid rgba(240,165,0,.25);color:var(--amber)}
+.sb-confirmed{background:rgba(0,212,180,.1);border:1px solid rgba(0,212,180,.25);color:var(--teal)}
+.sb-paid{background:rgba(32,184,80,.1);border:1px solid rgba(32,184,80,.25);color:var(--green)}
+.sb-driver{background:rgba(79,142,247,.12);border:1px solid rgba(79,142,247,.25);color:var(--blue)}
+.sb-passenger{background:rgba(157,110,253,.12);border:1px solid rgba(157,110,253,.25);color:var(--purple)}
+.sb-both{background:rgba(0,212,180,.12);border:1px solid rgba(0,212,180,.25);color:var(--teal)}
+
+/* AVATAR */
+.av-circle{width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;flex-shrink:0}
+
+/* ACTION BUTTONS in table */
+.act-btn{background:none;border:1px solid var(--border2);color:var(--text2);font-size:.65rem;padding:3px 8px;border-radius:4px;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.act-btn:hover{border-color:var(--teal);color:var(--teal)}
+.act-btn.danger:hover{border-color:var(--red);color:var(--red)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(4,9,15,.85);backdrop-filter:blur(8px);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.on{display:flex}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:22px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6),var(--glow-teal)}
+.modal-title{font-size:.95rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:9px}
+.modal-close{margin-left:auto;background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:3px}
+.modal-close:hover{color:var(--red)}
+.modal-footer{display:flex;gap:8px;margin-top:16px}
+.modal-footer .btn{flex:1}
+
+/* FORM SECTIONS */
+.form-section{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;margin-bottom:10px}
+.form-section-title{font-size:.67rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+
+/* ANALYTICS CARDS */
+.ana-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.ana-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;transition:all .2s}
+.ana-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.ana-val{font-size:1.7rem;font-weight:800;font-family:var(--mono);line-height:1;margin-bottom:4px}
+.ana-lbl{font-size:.63rem;color:var(--muted);font-weight:500}
+
+/* NOTIFICATION PANEL */
+.notif-panel{position:fixed;top:54px;right:0;width:340px;height:calc(100vh - 54px);background:var(--card);border-left:1px solid var(--border);z-index:300;transform:translateX(100%);transition:transform .25s ease;overflow-y:auto}
+.notif-panel.open{transform:translateX(0)}
+.notif-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.notif-item{padding:12px 16px;border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer}
+.notif-item:hover{background:var(--bg3)}
+.notif-item.unread{border-left:3px solid var(--teal)}
+.notif-item.read{border-left:3px solid transparent;opacity:.7}
+.notif-type{font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.notif-title{font-size:.8rem;font-weight:600;margin-bottom:3px}
+.notif-msg{font-size:.72rem;color:var(--text2);line-height:1.5}
+.notif-time{font-size:.62rem;color:var(--muted);font-family:var(--mono);margin-top:4px}
+
+/* SEARCH BAR */
+.search-bar{display:flex;gap:8px;align-items:center;margin-bottom:13px;flex-wrap:wrap}
+.search-input{flex:1;min-width:200px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);color:var(--text);font-family:var(--font);font-size:.8rem;outline:none;transition:all .2s}
+.search-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,212,180,.1)}
+.search-select{padding:8px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);color:var(--text);font-family:var(--font);font-size:.78rem;outline:none;cursor:pointer}
+
+/* TOAST */
+#toast{position:fixed;bottom:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:6px}
+.tmsg{padding:8px 13px;border-radius:var(--r2);font-size:.76rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.5);animation:tslide .22s ease;max-width:280px;backdrop-filter:blur(12px)}
+@keyframes tslide{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+.ts{background:rgba(32,184,80,.15);border:1px solid rgba(32,184,80,.3);color:var(--green)}
+.te{background:rgba(240,64,96,.15);border:1px solid rgba(240,64,96,.3);color:var(--red)}
+.ti{background:rgba(79,142,247,.15);border:1px solid rgba(79,142,247,.3);color:var(--blue)}
+.tw{background:rgba(240,165,0,.15);border:1px solid rgba(240,165,0,.3);color:var(--amber)}
+
+/* MISC */
+.empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:34px;text-align:center;color:var(--muted)}
+.eico{font-size:1.9rem;opacity:.3}
+.stars{color:var(--amber);font-size:.8rem}
+.verified{display:inline-block;color:var(--teal);font-size:.7rem;margin-left:3px}
+
+@media(max-width:900px){
+  .dash-layout{grid-template-columns:1fr}
+  .sidebar{position:static;max-height:none}
+  .g2,.g3,.charts2,.dgrid,.agent-grid{grid-template-columns:1fr}
+  .nav .nbtn{font-size:.68rem;padding:4px 8px}
+  .notif-panel{width:100%}
+  .dgrid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ══════════════════ RIDEBOT AI CHAT ══════════════════ */
+.chat-layout{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 54px);overflow:hidden}
+.chat-sidebar{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.chat-sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.chat-sidebar-title{font-size:.82rem;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:7px}
+.chat-rag-status{font-size:.62rem;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:10px}
+.rag-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.rag-dot.ready{background:var(--green);animation:pulse 2s infinite}
+.rag-dot.loading{background:var(--amber);animation:pulse 1s infinite}
+.chat-sessions{flex:1;overflow-y:auto;padding:8px}
+.chat-session-item{padding:8px 10px;border-radius:var(--r2);cursor:pointer;margin-bottom:4px;border:1px solid transparent;transition:all .15s}
+.chat-session-item:hover{background:var(--bg3);border-color:var(--border)}
+.chat-session-item.active{background:rgba(0,212,180,.08);border-color:rgba(0,212,180,.25)}
+.chat-session-name{font-size:.76rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-session-time{font-size:.62rem;color:var(--muted);margin-top:2px}
+.chat-session-preview{font-size:.65rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.chat-sidebar-footer{padding:10px;border-top:1px solid var(--border);flex-shrink:0}
+.chat-suggestions{padding:8px;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--border)}
+.chat-sugg-label{font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:0 4px;margin-bottom:2px}
+.sugg-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:var(--font);font-size:.68rem;padding:6px 9px;border-radius:var(--r2);cursor:pointer;text-align:left;transition:all .15s;line-height:1.4}
+.sugg-btn:hover{border-color:var(--teal);color:var(--teal);background:rgba(0,212,180,.05)}
+
+.chat-main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.chat-header{padding:12px 18px;border-bottom:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:12px;flex-shrink:0}
+.chat-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--blue));display:grid;place-items:center;font-size:1.1rem;flex-shrink:0;box-shadow:0 2px 10px rgba(0,212,180,.3)}
+.chat-header-info{flex:1}
+.chat-header-name{font-size:.88rem;font-weight:700}
+.chat-header-sub{font-size:.63rem;color:var(--muted)}
+.chat-header-actions{display:flex;gap:7px}
+.chat-action-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:.7rem;padding:5px 10px;border-radius:var(--r3);cursor:pointer;transition:all .15s;font-family:var(--font)}
+.chat-action-btn:hover{border-color:var(--teal);color:var(--teal)}
+
+.chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.msg{display:flex;gap:10px;animation:msgFade .3s ease}
+@keyframes msgFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{flex-direction:row-reverse}
+.msg-avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;flex-shrink:0;align-self:flex-start;margin-top:2px}
+.msg-avatar.bot{background:linear-gradient(135deg,var(--teal),var(--blue));box-shadow:0 2px 8px rgba(0,212,180,.25)}
+.msg-avatar.user{background:rgba(79,142,247,.2);color:var(--blue)}
+.msg-content{max-width:72%;display:flex;flex-direction:column;gap:5px}
+.msg.user .msg-content{align-items:flex-end}
+.msg-bubble{padding:10px 14px;border-radius:12px;font-size:.82rem;line-height:1.65;word-wrap:break-word}
+.msg-bubble.bot{background:var(--card);border:1px solid var(--border);color:var(--text);border-top-left-radius:3px}
+.msg-bubble.user{background:linear-gradient(135deg,var(--teal),var(--blue));color:#000;font-weight:500;border-top-right-radius:3px}
+.msg-bubble p{margin:0 0 8px 0}.msg-bubble p:last-child{margin:0}
+.msg-bubble ul,.msg-bubble ol{margin:6px 0 6px 16px;padding:0}.msg-bubble li{margin-bottom:3px}
+.msg-bubble strong{font-weight:700}.msg-bubble code{font-family:var(--mono);font-size:.78rem;background:rgba(0,0,0,.2);padding:1px 4px;border-radius:3px}
+.msg-meta{font-size:.6rem;color:var(--muted);display:flex;align-items:center;gap:6px;padding:0 4px}
+.msg-sources{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.src-pill{font-size:.58rem;padding:2px 7px;border-radius:8px;background:rgba(0,212,180,.08);border:1px solid rgba(0,212,180,.2);color:var(--teal);cursor:default}
+.src-pill:hover{background:rgba(0,212,180,.15)}
+
+.typing-indicator{display:flex;align-items:center;gap:5px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px;border-top-left-radius:3px;width:fit-content}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:typingBounce 1.2s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+.chat-input-area{padding:14px 18px;border-top:1px solid var(--border);background:var(--card);flex-shrink:0}
+.chat-input-wrap{display:flex;gap:8px;align-items:flex-end;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:8px 10px;transition:border .2s}
+.chat-input-wrap:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,212,180,.08)}
+.chat-textarea{flex:1;background:transparent;border:none;color:var(--text);font-family:var(--font);font-size:.83rem;resize:none;outline:none;max-height:120px;min-height:22px;line-height:1.5;padding:0}
+.chat-textarea::placeholder{color:var(--muted)}
+.chat-send-btn{background:linear-gradient(135deg,var(--teal),var(--blue));border:none;border-radius:8px;color:#000;cursor:pointer;font-size:.95rem;width:34px;height:34px;display:grid;place-items:center;transition:all .15s;flex-shrink:0}
+.chat-send-btn:hover{opacity:.85;transform:scale(1.05)}
+.chat-send-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.chat-input-footer{display:flex;align-items:center;gap:8px;margin-top:7px;font-size:.62rem;color:var(--muted)}
+.char-count{margin-left:auto;font-family:var(--mono)}
+.rag-info-bar{display:flex;align-items:center;gap:6px;font-size:.63rem;color:var(--muted);padding:6px 10px;background:rgba(0,212,180,.04);border:1px solid rgba(0,212,180,.1);border-radius:var(--r3);margin-bottom:8px}
+
+.chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;text-align:center;padding:32px}
+.chat-empty-icon{font-size:3rem;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.chat-empty-title{font-size:1.1rem;font-weight:800;color:var(--text)}
+.chat-empty-sub{font-size:.79rem;color:var(--text2);line-height:1.7;max-width:380px}
+.quick-actions{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:8px}
+.quick-btn{background:var(--card);border:1px solid var(--border);color:var(--text2);font-family:var(--font);font-size:.72rem;padding:8px 13px;border-radius:20px;cursor:pointer;transition:all .2s}
+.quick-btn:hover{border-color:var(--teal);color:var(--teal);transform:translateY(-1px)}
+
+@media(max-width:900px){.chat-layout{grid-template-columns:1fr}.chat-sidebar{display:none}}
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" href="#">
+    <div class="logo-icon">🚗</div>
+    <div><div class="logo-name">RideKaro</div><div class="logo-sub">AI Carpooling Platform</div></div>
+  </a>
+  <nav class="nav">
+    <button class="nbtn on" onclick="showPage('p-dash',this)">🏠 Dashboard</button>
+    <button class="nbtn" onclick="showPage('p-db',this);loadDB()">🗄️ Database</button>
+    <button class="nbtn" onclick="showPage('p-agents',this)">🤖 Agents</button>
+    <button class="nbtn" onclick="showPage('p-algo',this)">⚡ Algorithms</button>
+    <button class="nbtn" onclick="showPage('p-ml',this)">🧠 ML Analytics</button>
+    <button class="nbtn" onclick="showPage('p-res',this)">📊 Results</button>
+    <button class="nbtn" id="chat-nav-btn" onclick="showPage('p-chat',this);initChat()" style="color:var(--teal);font-weight:700">💬 RideBot AI</button>
+  </nav>
+  <button class="notif-btn" id="notif-toggle" onclick="toggleNotifPanel()" title="Notifications">
+    🔔<span class="notif-badge" id="notif-count" style="display:none">0</span>
+  </button>
+  <div class="hbadge"><span class="dot"></span>Live · SQLite DB</div>
+</header>
+
+<!-- NOTIFICATION PANEL -->
+<div class="notif-panel" id="notif-panel">
+  <div class="notif-header">
+    <span style="font-size:.9rem;font-weight:700">🔔 Notifications</span>
+    <button class="btn bline bsm" style="width:auto;margin-left:auto" onclick="markNotifsRead()">Mark all read</button>
+    <button style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;margin-left:6px" onclick="toggleNotifPanel()">✕</button>
+  </div>
+  <div id="notif-list"><div class="empty"><div class="eico">🔕</div>No notifications</div></div>
+</div>
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 1: DASHBOARD
+══════════════════════════════════════════════════════════ -->
+<div id="p-dash" class="page on">
+<div class="dash-layout">
+<aside class="sidebar">
+  <div class="sbs">
+    <div class="sbl">⚡ Quick Scenario</div>
+    <div class="r2" style="margin-bottom:5px">
+      <div class="fg"><label>Drivers</label><input type="number" id="dm-d" value="5" min="1" max="10"></div>
+      <div class="fg"><label>Passengers</label><input type="number" id="dm-p" value="12" min="1" max="20"></div>
+    </div>
+    <div class="r2" style="margin-bottom:7px">
+      <div class="fg"><label>Hour (0–23)</label><input type="number" id="dm-h" value="8" min="0" max="23"></div>
+      <div class="fg"><label>Seed</label><input type="number" id="dm-s" value="42"></div>
+    </div>
+    <button class="btn bline" onclick="generateDemo()">⚡ Generate Demo Scenario</button>
+  </div>
+
+  <div class="sbs">
+    <div class="sbl">🚘 Add Driver <span class="bdg bdg-b" id="dcnt">0</span></div>
+    <div class="tabs">
+      <button class="tab on" onclick="stab('df','dl',this)">Add New</button>
+      <button class="tab" onclick="stab('dl','df',this)">View List</button>
+    </div>
+    <div id="df">
+      <div class="fg"><label>Full Name</label><input type="text" id="d-name" placeholder="e.g. Ali Hassan"></div>
+      <div class="r2">
+        <div class="fg"><label>Pickup</label><select id="d-pu">{% for l in locations %}<option value="{{l}}">{{l.replace('_',' ')}}</option>{% endfor %}</select></div>
+        <div class="fg"><label>Dropoff</label><select id="d-do">{% for l in locations %}<option value="{{l}}" {% if loop.index==2 %}selected{% endif %}>{{l.replace('_',' ')}}</option>{% endfor %}</select></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>TW Start (min)</label><input type="number" id="d-tws" value="450"></div>
+        <div class="fg"><label>TW End (min)</label><input type="number" id="d-twe" value="540"></div>
+      </div>
+      <div class="r3" style="margin-bottom:8px">
+        <div class="fg"><label>Seats</label><select id="d-cap"><option>4</option><option>5</option><option>6</option></select></div>
+        <div class="fg"><label>Rating</label><input type="number" id="d-rat" value="4.5" min="1" max="5" step="0.1"></div>
+        <div class="fg"><label>km/L</label><input type="number" id="d-fe" value="15" min="5" max="25"></div>
+      </div>
+      <button class="btn bteal" onclick="addDriver()">+ Add Driver</button>
+    </div>
+    <div id="dl" style="display:none"><div class="ulist" id="d-ul"><div class="empty"><div class="eico">🚘</div>No drivers added</div></div></div>
+  </div>
+
+  <div class="sbs">
+    <div class="sbl">🧑 Add Passenger <span class="bdg bdg-p" id="pcnt">0</span></div>
+    <div class="tabs">
+      <button class="tab on" onclick="stab('pf','pl',this)">Add New</button>
+      <button class="tab" onclick="stab('pl','pf',this)">View List</button>
+    </div>
+    <div id="pf">
+      <div class="fg"><label>Full Name</label><input type="text" id="p-name" placeholder="e.g. Sara Malik"></div>
+      <div class="r2">
+        <div class="fg"><label>Pickup</label><select id="p-pu">{% for l in locations %}<option value="{{l}}">{{l.replace('_',' ')}}</option>{% endfor %}</select></div>
+        <div class="fg"><label>Dropoff</label><select id="p-do">{% for l in locations %}<option value="{{l}}" {% if loop.index==3 %}selected{% endif %}>{{l.replace('_',' ')}}</option>{% endfor %}</select></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>TW Start (min)</label><input type="number" id="p-tws" value="450"></div>
+        <div class="fg"><label>TW End (min)</label><input type="number" id="p-twe" value="540"></div>
+      </div>
+      <div class="r2" style="margin-bottom:8px">
+        <div class="fg"><label>Seats</label><select id="p-seats"><option>1</option><option>2</option><option>3</option></select></div>
+        <div class="fg"><label>Max Detour (min)</label><input type="number" id="p-det" value="15" min="1"></div>
+      </div>
+      <button class="btn bteal" onclick="addPassenger()">+ Add Passenger</button>
+    </div>
+    <div id="pl" style="display:none"><div class="ulist" id="p-ul"><div class="empty"><div class="eico">🧑</div>No passengers added</div></div></div>
+  </div>
+
+  <div class="sbs">
+    <div class="sbl">⚙️ Pipeline Settings</div>
+    <div class="r2">
+      <div class="fg"><label>Departure Hour</label><input type="number" id="rh" value="8" min="0" max="23"></div>
+      <div class="fg"><label>Weather</label><select id="rw"><option value="clear">☀️ Clear</option><option value="rainy">🌧 Rainy</option><option value="foggy">🌫 Foggy</option></select></div>
+    </div>
+    <div class="r2" style="margin-bottom:9px">
+      <div class="fg"><label>GA Population</label><input type="number" id="rpop" value="60" min="10"></div>
+      <div class="fg"><label>GA Generations</label><input type="number" id="rgen" value="80" min="10"></div>
+    </div>
+    <button class="btn brun" id="run-btn" onclick="runPipeline()">▶ Run AI Pipeline</button>
+    <div id="prog-wrap" style="display:none" class="progwrap">
+      <div class="progbar"><div class="progfill" id="prog-fill"></div></div>
+      <div class="proglbl" id="prog-lbl">Initialising agents...</div>
+    </div>
+    <div style="margin-top:7px"><button class="btn bred" onclick="clearAll()">✕ Clear All Data</button></div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="card">
+    <div class="ctitle"><span class="ico">🗺️</span>Karachi Road Network — Live Interactive Map
+      <span class="cright">Scroll to zoom · drag to pan</span>
+    </div>
+    <div id="map-wrap"><svg id="map-svg"></svg>
+      <div class="mleg">
+        <div class="ml-row"><div class="ml-dot" style="background:var(--teal)"></div>Location node</div>
+        <div class="ml-row"><div class="ml-dot" style="background:var(--amber)"></div>Driver pickup</div>
+        <div class="ml-row"><div class="ml-dot" style="background:var(--purple)"></div>Passenger pickup</div>
+        <div class="ml-row"><div class="ml-line" style="background:var(--border2)"></div>Clear road</div>
+        <div class="ml-row"><div class="ml-line" style="background:var(--red)"></div>Heavy traffic</div>
+        <div class="ml-row"><div class="ml-line" style="background:var(--teal)"></div>Optimised route</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">
+      <span class="pill pt">A* Routing</span><span class="pill pb2">BFS+IDA*</span>
+      <span class="pill pa">Genetic Algorithm</span><span class="pill pp">CSP+AC-3</span>
+      <span class="pill pg">Bayesian ETA</span><span class="pill pr2">11 AI Agents</span>
+      <span class="pill po">Alpha-Beta</span><span class="pill pg">CO₂ Tracking</span>
+      <span class="pill pt">SQLite DB</span>
+    </div>
+  </div>
+
+  <div id="welcome" class="card">
+    <div class="empty" style="padding:40px">
+      <div style="font-size:2.4rem;opacity:1;margin-bottom:4px">🚀</div>
+      <div style="font-size:.95rem;font-weight:800;color:var(--text);margin-bottom:6px">Intelligent Carpooling Optimisation</div>
+      <div style="font-size:.78rem;line-height:1.8;color:var(--text2)">Add drivers &amp; passengers manually or click <strong style="color:var(--teal)">⚡ Generate Demo Scenario</strong>,<br>then press <strong style="color:var(--teal)">▶ Run AI Pipeline</strong> to see 11 agents collaborate in real time.</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:13px">
+        <span class="pill pt">A* · IDA* · BiDir BFS</span><span class="pill pb2">BFS · DFS · Beam · Hill Climbing</span>
+        <span class="pill pa">Genetic Algorithm</span><span class="pill pp">CSP + AC-3 + MRV + LCV</span>
+        <span class="pill pg">Gaussian Naive Bayes</span><span class="pill pr2">Alpha-Beta Pruning</span>
+        <span class="pill po">K-Means · Random Forest · PCA</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="dash-res" style="display:none">
+    <div class="card card-glow"><div class="ctitle"><span class="ico">📊</span>Pipeline Summary — Real-World Metrics</div><div class="sgrid" id="stat-grid"></div></div>
+    <div class="card"><div class="ctitle"><span class="ico">🔮</span>Bayesian Network — Zone Demand &amp; ETA Pricing</div><div class="dgrid" id="dem-grid"></div></div>
+    <div class="card"><div class="ctitle"><span class="ico">🚗</span>Optimised Ride Groups</div><div id="rg-wrap"></div></div>
+    <div id="unm-card" class="card" style="display:none"><div class="ctitle"><span class="ico">⚠️</span>Unmatched Passengers</div><div id="unm-list"></div></div>
+    <div class="card"><div class="ctitle"><span class="ico">⏱️</span>Agent Pipeline Timeline</div><div class="timeline" id="dash-timeline"></div></div>
+  </div>
+</div>
+</div>
+</div>
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 2: DATABASE MANAGEMENT
+══════════════════════════════════════════════════════════ -->
+<div id="p-db" class="page">
+<div class="dblayout">
+
+  <!-- Analytics Overview -->
+  <div class="card card-glow">
+    <div class="ctitle"><span class="ico">📈</span>Platform Analytics — Live Database Statistics
+      <button class="btn bline bsm cright" onclick="loadDB()" style="width:auto">↻ Refresh</button>
+    </div>
+    <div class="ana-grid" id="db-analytics">
+      <div class="ana-card"><div class="ana-val" style="color:var(--teal)">—</div><div class="ana-lbl">Total Users</div></div>
+    </div>
+  </div>
+
+  <!-- DB Navigation Tabs -->
+  <div class="card" style="padding:14px">
+    <div class="db-tabs" id="db-tabs">
+      <button class="db-tab on" onclick="dbTab('db-users',this)">👥 Users</button>
+      <button class="db-tab" onclick="dbTab('db-rides',this)">🚗 Rides</button>
+      <button class="db-tab" onclick="dbTab('db-bookings',this)">🎫 Bookings</button>
+      <button class="db-tab" onclick="dbTab('db-sessions',this)">🤖 AI Sessions</button>
+    </div>
+
+    <!-- USERS TABLE -->
+    <div id="db-users">
+      <div class="search-bar">
+        <input class="search-input" id="user-search" placeholder="Search by name, email…" oninput="filterUsers()">
+        <select class="search-select" id="user-role-filter" onchange="filterUsers()">
+          <option value="">All Roles</option>
+          <option value="driver">Drivers</option>
+          <option value="passenger">Passengers</option>
+          <option value="both">Both</option>
+        </select>
+        <button class="btn bteal bsm" onclick="openModal('modal-add-user')">+ Add User</button>
+      </div>
+      <div class="dtable-wrap">
+        <table class="dtable">
+          <thead><tr>
+            <th>User</th><th>Email</th><th>Phone</th><th>Role</th>
+            <th>Rating</th><th>Rides</th><th>Verified</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="users-tbody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIDES TABLE -->
+    <div id="db-rides" style="display:none">
+      <div class="search-bar">
+        <input class="search-input" id="ride-search" placeholder="Search by origin, destination…" oninput="filterRides()">
+        <select class="search-select" id="ride-status-filter" onchange="filterRides()">
+          <option value="">All Status</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <button class="btn bteal bsm" onclick="openModal('modal-add-ride')">+ Post Ride</button>
+      </div>
+      <div class="dtable-wrap">
+        <table class="dtable">
+          <thead><tr>
+            <th>Ride ID</th><th>Driver</th><th>Route</th><th>Departure</th>
+            <th>Seats</th><th>Fare/Seat</th><th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="rides-tbody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BOOKINGS TABLE -->
+    <div id="db-bookings" style="display:none">
+      <div class="search-bar">
+        <input class="search-input" id="booking-search" placeholder="Search bookings…" oninput="filterBookings()">
+        <button class="btn bteal bsm" onclick="openModal('modal-add-booking')">+ Book Ride</button>
+      </div>
+      <div class="dtable-wrap">
+        <table class="dtable">
+          <thead><tr>
+            <th>Booking ID</th><th>Ride</th><th>Passenger</th>
+            <th>Seats</th><th>Fare Paid</th><th>Status</th><th>Payment</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="bookings-tbody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- AI SESSIONS TABLE -->
+    <div id="db-sessions" style="display:none">
+      <div class="dtable-wrap">
+        <table class="dtable">
+          <thead><tr>
+            <th>Session ID</th><th>Drivers</th><th>Passengers</th><th>Groups</th>
+            <th>Matched</th><th>CO₂ Saved</th><th>Avg Fare</th><th>GA Fitness</th><th>Time</th>
+          </tr></thead>
+          <tbody id="sessions-tbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 3: AGENTS
+══════════════════════════════════════════════════════════ -->
+<div id="p-agents" class="page">
+<div class="rlayout">
+  <div class="card">
+    <div class="ctitle"><span class="ico">🤖</span>Multi-Agent System Architecture — 11 Goal-Based Rational Agents</div>
+    <div class="agent-grid" id="agent-grid"></div>
+  </div>
+  <div class="card" id="nego-card" style="display:none">
+    <div class="ctitle"><span class="ico">♟️</span>NegotiationAgent — Alpha-Beta / Minimax Outcomes</div>
+    <div style="overflow-x:auto">
+      <table class="stbl"><thead><tr><th>Driver</th><th>Passenger</th><th>Utility</th><th>Outcome</th><th>Base Fare (PKR)</th><th>Negotiated Fare</th><th>Reason</th></tr></thead>
+      <tbody id="nego-tbody"></tbody></table>
+    </div>
+  </div>
+  <div class="card" id="safety-card" style="display:none">
+    <div class="ctitle"><span class="ico">🛡️</span>SafetyAgent — Audit Report</div>
+    <div id="safety-content"></div>
+  </div>
+  <div class="card" id="cost-card" style="display:none">
+    <div class="ctitle"><span class="ico">💰</span>CostOptimiserAgent — Dynamic Fare Table</div>
+    <div style="overflow-x:auto">
+      <table class="stbl"><thead><tr><th>Driver</th><th>Passengers</th><th>Distance</th><th>Fuel (L)</th><th>Surge</th><th>Utilisation</th><th>Fare/Person</th><th>CO₂ Saved</th></tr></thead>
+      <tbody id="cost-tbody"></tbody></table>
+    </div>
+  </div>
+  <div class="card" id="traffic-card" style="display:none">
+    <div class="ctitle"><span class="ico">🚦</span>TrafficIntelAgent — Karachi Congestion Map</div>
+    <div id="traffic-content"></div>
+  </div>
+  <div class="card">
+    <div class="ctitle"><span class="ico">📜</span>Full Agent Activity Log</div>
+    <div class="logbox" id="agent-full-log"><div style="color:var(--muted)">Run the pipeline to see agent logs…</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 4: ALGORITHMS
+══════════════════════════════════════════════════════════ -->
+<div id="p-algo" class="page">
+<div class="alayout">
+  <div class="card">
+    <div class="ctitle"><span class="ico">⚡</span>Search Algorithm Visualiser — Step-by-Step on Karachi Map</div>
+    <div class="acontrols">
+      <div class="fg" style="margin:0;flex:0 0 auto">
+        <label>Algorithm</label>
+        <select id="algo-sel" style="width:195px">
+          <option value="astar">A* — Informed Search (Optimal)</option>
+          <option value="idastar">IDA* — Iterative Deepening A*</option>
+          <option value="bfs">BFS — Breadth-First Search</option>
+          <option value="dfs">DFS — Depth-First Search</option>
+          <option value="dijkstra">Dijkstra — Uniform Cost</option>
+          <option value="ucs">UCS — Uniform Cost Search</option>
+          <option value="greedy">Greedy Best-First</option>
+          <option value="hillclimb">Hill Climbing (Restarts)</option>
+          <option value="beam">Beam Search (w=3)</option>
+          <option value="bibfs">Bidirectional BFS</option>
+        </select>
+      </div>
+      <div class="fg" style="margin:0;flex:1"><label>Source</label>
+        <select id="algo-src">{% for l in locations %}<option value="{{l}}">{{l.replace('_',' ')}}</option>{% endfor %}</select></div>
+      <div class="fg" style="margin:0;flex:1"><label>Destination</label>
+        <select id="algo-dst">{% for l in locations %}<option value="{{l}}" {% if loop.index==5 %}selected{% endif %}>{{l.replace('_',' ')}}</option>{% endfor %}</select></div>
+      <div style="display:flex;gap:6px;align-items:flex-end">
+        <button class="btn bteal bsm" onclick="runAlgo()">▶ Run</button>
+        <button class="btn bblue bsm" onclick="animateAlgo()">⏩ Animate</button>
+        <button class="btn bline bsm" onclick="stopAnim()">⏹ Stop</button>
+      </div>
+    </div>
+    <div style="margin-top:9px">
+      <div class="step-counter" id="step-counter" style="display:none">
+        <span style="color:var(--muted);font-size:.72rem">Step</span>
+        <span class="step-val" id="step-val">0</span>
+        <span style="color:var(--muted);font-size:.72rem">of</span>
+        <span class="step-val" id="step-total">0</span>
+        <span style="margin-left:auto;display:flex;gap:7px;flex-wrap:wrap">
+          <span style="font-size:.72rem;color:var(--muted)">Path: <strong id="algo-path-d" style="color:var(--teal);font-family:var(--mono)">—</strong></span>
+          <span style="font-size:.72rem;color:var(--muted)">Cost: <strong id="algo-cost-d" style="color:var(--amber);font-family:var(--mono)">—</strong> km</span>
+          <span style="font-size:.72rem;color:var(--muted)">Explored: <strong id="algo-exp-d" style="color:var(--blue);font-family:var(--mono)">—</strong></span>
+        </span>
+      </div>
+    </div>
+    <div class="alomap" id="algo-map" style="margin-top:9px"><svg id="algo-svg"></svg></div>
+    <div class="atrace" id="algo-trace" style="margin-top:9px"><div style="color:var(--muted)">Run an algorithm to see the step-by-step trace…</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle"><span class="ico">📊</span>Algorithm Benchmark — All 10 Algorithms vs Same Route</div>
+    <div style="display:flex;gap:7px;margin-bottom:11px;flex-wrap:wrap;align-items:flex-end">
+      <div class="fg" style="margin:0;flex:1"><label>Source</label>
+        <select id="bm-src">{% for l in locations %}<option value="{{l}}">{{l.replace('_',' ')}}</option>{% endfor %}</select></div>
+      <div class="fg" style="margin:0;flex:1"><label>Destination</label>
+        <select id="bm-dst">{% for l in locations %}<option value="{{l}}" {% if loop.index==8 %}selected{% endif %}>{{l.replace('_',' ')}}</option>{% endfor %}</select></div>
+      <button class="btn bblue bsm" onclick="runBenchmark()">🏁 Benchmark All</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="btbl">
+        <thead><tr><th>Algorithm</th><th>Type</th><th>Distance (km)</th><th>Nodes Explored</th><th>Path Hops</th><th>Optimality</th></tr></thead>
+        <tbody id="bench-body"><tr><td colspan="6" style="color:var(--muted);padding:18px;text-align:center">Run benchmark to compare all 10 algorithms</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle"><span class="ico">♟️</span>Alpha-Beta Pruning — Minimax Negotiation Game Tree</div>
+    <p style="font-size:.75rem;color:var(--text2);margin-bottom:11px;line-height:1.7">
+      Models price negotiation as a 2-player zero-sum game.
+      <strong style="color:var(--green)">MAX (driver)</strong> maximises earnings.
+      <strong style="color:var(--red)">MIN (passenger)</strong> minimises fare &amp; detour.
+      <strong style="color:var(--amber)">Pruned ✂</strong> branches are eliminated — saving computation.
+    </p>
+    <div style="display:flex;gap:8px;margin-bottom:11px;align-items:flex-end;flex-wrap:wrap">
+      <div class="fg" style="margin:0"><label>Tree Depth</label>
+        <select id="ab-depth" style="width:75px"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select></div>
+      <button class="btn bteal bsm" onclick="runAB()">▶ Run Alpha-Beta</button>
+      <div id="ab-result" style="font-family:var(--mono);font-size:.8rem;color:var(--teal);padding:5px 10px;background:rgba(0,212,180,.06);border:1px solid rgba(0,212,180,.2);border-radius:var(--r3)">—</div>
+    </div>
+    <svg id="ab-svg"></svg>
+    <div class="atrace" id="ab-trace" style="margin-top:9px"><div style="color:var(--muted)">Run alpha-beta to see pruning trace…</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 5: ML ANALYTICS
+══════════════════════════════════════════════════════════ -->
+<div id="p-ml" class="page">
+<div class="mlayout">
+  <div id="ml-loading" class="card" style="text-align:center;padding:40px">
+    <div style="font-size:1.5rem;margin-bottom:10px">🧠</div>
+    <div style="color:var(--text2);font-size:.85rem">Training ML models on ride dataset…</div>
+    <div class="progbar" style="margin-top:12px"><div class="progfill" id="ml-prog" style="width:60%"></div></div>
+  </div>
+  <div id="ml-content" style="display:none">
+    <div class="card card-glow">
+      <div class="ctitle"><span class="ico">📊</span>Exploratory Data Analysis</div>
+      <div class="sgrid" id="eda-stats"></div>
+      <div class="g3" style="margin-top:13px">
+        <div><div style="font-size:.67rem;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:6px;letter-spacing:.06em">Trip Distance Distribution</div><canvas id="hist-cv" width="300" height="160"></canvas></div>
+        <div><div style="font-size:.67rem;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:6px;letter-spacing:.06em">Match Rate by Hour</div><canvas id="hour-cv" width="300" height="160"></canvas></div>
+        <div><div style="font-size:.67rem;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:6px;letter-spacing:.06em">Feature Correlation Matrix</div><canvas id="corr-cv" width="300" height="160"></canvas></div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="ctitle"><span class="ico">🌲</span>Random Forest + Gradient Boosting Ensemble</div>
+        <div id="clf-metrics"></div>
+        <div class="fbars" id="feat-bars" style="margin-top:10px"></div>
+        <div class="g2" style="margin-top:12px">
+          <div><div style="font-size:.67rem;color:var(--muted);margin-bottom:7px">Accuracy Comparison</div><div id="acc-bars" class="fbars"></div></div>
+          <div><div id="cm-wrap"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ctitle"><span class="ico">📉</span>PCA — 2D Dimensionality Reduction</div>
+        <canvas id="pca-cv" width="380" height="220" style="width:100%"></canvas>
+        <div id="pca-info" style="font-size:.72rem;color:var(--muted);margin-top:7px"></div>
+        <div class="ctitle" style="margin-top:13px"><span class="ico">🗺️</span>K-Means Zone Clustering</div>
+        <svg id="cluster-svg"></svg>
+        <div id="cluster-info" style="font-size:.72rem;color:var(--muted);margin-top:6px"></div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="ctitle"><span class="ico">⭐</span>Rating Predictor — Gradient Regression</div>
+        <div id="rating-metrics"></div>
+        <div class="pform" style="margin-top:10px">
+          <div class="form-section-title">Predict Ride Rating</div>
+          <div class="r2">
+            <div class="fg"><label>Distance (km)</label><input type="number" id="pr-dist" value="12" min="1"></div>
+            <div class="fg"><label>Detour (min)</label><input type="number" id="pr-det" value="5" min="0"></div>
+          </div>
+          <div class="r3">
+            <div class="fg"><label>Time Diff (min)</label><input type="number" id="pr-td" value="10"></div>
+            <div class="fg"><label>Passengers</label><input type="number" id="pr-np" value="2" min="1" max="6"></div>
+            <div class="fg"><label>Weather (0-3)</label><input type="number" id="pr-wx" value="0" min="0" max="3"></div>
+          </div>
+          <button class="btn bteal" onclick="predictRating()">⭐ Predict Rating</button>
+          <div class="pres" id="rating-res"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ctitle"><span class="ico">🎯</span>Match Predictor — Ensemble Classifier</div>
+        <div style="font-size:.64rem;color:var(--muted);margin-bottom:3px">Ensemble Accuracy: <strong id="ens-acc" style="color:var(--teal)">—</strong></div>
+        <div class="pform">
+          <div class="form-section-title">Predict Driver–Passenger Match</div>
+          <div class="r2">
+            <div class="fg"><label>Hour (0–23)</label><input type="number" id="mp-hour" value="8" min="0" max="23"></div>
+            <div class="fg"><label>Distance (km)</label><input type="number" id="mp-dist" value="8" min="1"></div>
+          </div>
+          <div class="r2">
+            <div class="fg"><label>Detour (min)</label><input type="number" id="mp-det" value="5"></div>
+            <div class="fg"><label>Time Diff (min)</label><input type="number" id="mp-td" value="10"></div>
+          </div>
+          <div class="r2">
+            <div class="fg"><label>Passengers</label><input type="number" id="mp-np" value="2" min="1" max="6"></div>
+            <div class="fg"><label>Driver Rating</label><input type="number" id="mp-dr" value="4.5" min="1" max="5" step=".1"></div>
+          </div>
+          <div class="fg" style="margin-bottom:8px"><label>Weather (0=clear,1=rain,2=fog,3=storm)</label><input type="number" id="mp-wx" value="0" min="0" max="3"></div>
+          <button class="btn bteal" onclick="predictMatch()">🎯 Predict Match</button>
+          <div class="pres" id="match-res"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 6: RESULTS
+══════════════════════════════════════════════════════════ -->
+<div id="p-res" class="page">
+<div class="rlayout">
+  <div id="no-results" class="card"><div class="empty" style="padding:40px"><div class="eico">📊</div>Run the AI pipeline first to see detailed results here.</div></div>
+  <div id="results-content" style="display:none">
+    <div class="card card-glow"><div class="ctitle"><span class="ico">📊</span>Full Pipeline Summary</div><div class="sgrid" id="res-stat-grid"></div></div>
+    <div class="card">
+      <div class="ctitle"><span class="ico">🔀</span>Algorithm Comparison — A* vs BFS vs Greedy</div>
+      <div style="overflow-x:auto">
+        <table class="atbl">
+          <thead><tr><th>Route Pair</th><th>A* Distance</th><th>A* Explored</th><th>BFS Distance</th><th>BFS Explored</th><th>Greedy Distance</th><th>Greedy Explored</th></tr></thead>
+          <tbody id="algo-cmp-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="ctitle"><span class="ico">🧬</span>Genetic Algorithm Convergence</div>
+        <canvas id="ga-cv" width="500" height="240" style="width:100%"></canvas>
+        <div id="ga-stats-row" style="font-size:.72rem;color:var(--muted);margin-top:6px"></div>
+      </div>
+      <div class="card">
+        <div class="ctitle"><span class="ico">📜</span>AI Pipeline Log</div>
+        <div class="logbox" id="res-log"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle"><span class="ico">📷</span>Visual Charts</div>
+      <div class="charts2" id="res-charts"></div>
+    </div>
+  </div>
+</div>
+</div>
+<!-- ══════════════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════════════ -->
+
+<!-- Add User Modal -->
+<div class="modal-overlay" id="modal-add-user" onclick="closeModalOverlay(event,'modal-add-user')">
+<div class="modal">
+  <div class="modal-title">👤 Add New User
+    <button class="modal-close" onclick="closeModal('modal-add-user')">✕</button>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title">Personal Details</div>
+    <div class="fg"><label>Full Name *</label><input id="mu-name" placeholder="Ahmed Khan"></div>
+    <div class="fg"><label>Email Address *</label><input type="email" id="mu-email" placeholder="ahmed@example.com"></div>
+    <div class="fg"><label>Phone Number</label><input id="mu-phone" placeholder="+92-300-1234567"></div>
+    <div class="fg"><label>Role</label>
+      <select id="mu-role">
+        <option value="passenger">Passenger</option>
+        <option value="driver">Driver</option>
+        <option value="both">Both (Driver &amp; Passenger)</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn bline" onclick="closeModal('modal-add-user')">Cancel</button>
+    <button class="btn bteal" onclick="submitAddUser()">Create User</button>
+  </div>
+</div>
+</div>
+
+<!-- Add Ride Modal -->
+<div class="modal-overlay" id="modal-add-ride" onclick="closeModalOverlay(event,'modal-add-ride')">
+<div class="modal">
+  <div class="modal-title">🚗 Post New Ride
+    <button class="modal-close" onclick="closeModal('modal-add-ride')">✕</button>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title">Ride Details</div>
+    <div class="r2">
+      <div class="fg"><label>Driver *</label><select id="mr-driver"><option value="">— select —</option></select></div>
+      <div class="fg"><label>Vehicle *</label><select id="mr-vehicle"><option value="">— select —</option></select></div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>Origin *</label><select id="mr-origin">{% for l in locations %}<option>{{l.replace('_',' ')}}</option>{% endfor %}</select></div>
+      <div class="fg"><label>Destination *</label><select id="mr-dest">{% for l in locations %}<option {% if loop.index==3 %}selected{% endif %}>{{l.replace('_',' ')}}</option>{% endfor %}</select></div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>Departure Time *</label><input type="datetime-local" id="mr-time"></div>
+      <div class="fg"><label>Weather</label><select id="mr-weather"><option value="clear">☀️ Clear</option><option value="rainy">🌧 Rainy</option><option value="foggy">🌫 Foggy</option></select></div>
+    </div>
+    <div class="r3">
+      <div class="fg"><label>Seats Available *</label><input type="number" id="mr-seats" value="3" min="1" max="6"></div>
+      <div class="fg"><label>Fare/Seat (PKR) *</label><input type="number" id="mr-fare" value="150" min="1"></div>
+      <div class="fg"><label>Est. Distance (km)</label><input type="number" id="mr-dist" value="12" min="1"></div>
+    </div>
+    <div class="fg"><label>Notes (optional)</label><input id="mr-notes" placeholder="AC available, no smoking…"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn bline" onclick="closeModal('modal-add-ride')">Cancel</button>
+    <button class="btn bteal" onclick="submitAddRide()">Post Ride</button>
+  </div>
+</div>
+</div>
+
+<!-- Add Booking Modal -->
+<div class="modal-overlay" id="modal-add-booking" onclick="closeModalOverlay(event,'modal-add-booking')">
+<div class="modal">
+  <div class="modal-title">🎫 Book a Ride
+    <button class="modal-close" onclick="closeModal('modal-add-booking')">✕</button>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title">Booking Details</div>
+    <div class="fg"><label>Passenger *</label><select id="mb-pass"><option value="">— select passenger —</option></select></div>
+    <div class="fg"><label>Ride *</label><select id="mb-ride"><option value="">— select ride —</option></select></div>
+    <div class="r2">
+      <div class="fg"><label>Pickup Stop *</label><input id="mb-pu" placeholder="e.g. NUCES Gate"></div>
+      <div class="fg"><label>Dropoff Stop *</label><input id="mb-do" placeholder="e.g. Clifton"></div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>Seats Needed *</label><input type="number" id="mb-seats" value="1" min="1" max="4"></div>
+      <div class="fg"><label>Fare to Pay (PKR) *</label><input type="number" id="mb-fare" value="150" min="1"></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn bline" onclick="closeModal('modal-add-booking')">Cancel</button>
+    <button class="btn bteal" onclick="submitAddBooking()">Confirm Booking</button>
+  </div>
+</div>
+</div>
+
+<!-- Ride Detail Modal -->
+<div class="modal-overlay" id="modal-ride-detail" onclick="closeModalOverlay(event,'modal-ride-detail')">
+<div class="modal" style="max-width:600px">
+  <div class="modal-title">🚗 Ride Details
+    <button class="modal-close" onclick="closeModal('modal-ride-detail')">✕</button>
+  </div>
+  <div id="ride-detail-content"></div>
+</div>
+</div>
+
+<div id="toast"></div>
+<script>
+// ════════════════════════════════════════════════════════════
+//  CONSTANTS & STATE
+// ════════════════════════════════════════════════════════════
+const GRP_COLORS=['#00d4b4','#4f8ef7','#9d6efd','#f0a500','#20b850','#f04060','#f07030','#e040a0'];
+const AGENT_DEFS=[
+  {name:'EnvironmentAgent',icon:'🌍',role:'Monitors Karachi road network; injects real-time traffic factors, time-of-day multipliers, and weather events',algo:'Bayesian Network',cls:'ac-env'},
+  {name:'TrafficIntelAgent',icon:'🚦',role:'Analyses congestion on each road segment using historical data and live updates; adjusts edge weights dynamically',algo:'Weighted Graph Updates',cls:'ac-traffic'},
+  {name:'DemandPredictionAgent',icon:'🔮',role:'Forecasts pickup demand per zone using Gaussian Naïve Bayes trained on hourly + weather features',algo:'Gaussian Naïve Bayes',cls:'ac-pred'},
+  {name:'MatchingAgent',icon:'🔗',role:'Pairs compatible drivers & passengers using BFS over shared time windows and route proximity constraints',algo:'BFS + Heuristics',cls:'ac-match'},
+  {name:'NegotiationAgent',icon:'♟️',role:'Resolves fare conflicts between driver & passenger using Alpha-Beta pruning on a Minimax game tree',algo:'Alpha-Beta Pruning',cls:'ac-nego'},
+  {name:'GAOptimiserAgent',icon:'🧬',role:'Globally optimises ride group assignments via tournament-selection Genetic Algorithm with elitism',algo:'Genetic Algorithm',cls:'ac-ga'},
+  {name:'RouteOptimizerAgent',icon:'🗺️',role:'Computes shortest route for each group with A*; evaluates alternatives using IDA*, Dijkstra & Beam Search',algo:'A* / IDA* / Dijkstra',cls:'ac-route'},
+  {name:'CSPSolverAgent',icon:'🧩',role:'Enforces seat capacity, detour limits, gender preferences & time windows using AC-3 arc consistency + MRV+LCV heuristics',algo:'CSP + AC-3 + MRV/LCV',cls:'ac-csp'},
+  {name:'SafetyAgent',icon:'🛡️',role:'Audits driver/passenger ratings; flags suspicious pairings; applies gender-safety constraints and rating thresholds',algo:'Rule-Based + Ratings',cls:'ac-safe'},
+  {name:'CostOptimiserAgent',icon:'💰',role:'Calculates dynamic surge pricing, fuel cost splits, and CO₂ savings per ride group',algo:'Dynamic Pricing',cls:'ac-cost'},
+  {name:'OrchestratorAgent',icon:'🎯',role:'Coordinates the entire 10-agent pipeline; manages state, ordering, timeouts, and error recovery',algo:'Orchestration Pattern',cls:'ac-orch'},
+];
+
+let _graphData=null,_algoResult=null,_animTimer=null,_mlLoaded=false,_lastReport=null;
+let _dbUsers=[],_dbRides=[],_dbBookings=[];
+let _notifPanelOpen=false;
+const PROG_STEPS=[
+  [8,'⚙️ EnvironmentAgent: Loading Karachi graph...'],
+  [15,'🚦 TrafficIntelAgent: Analysing congestion...'],
+  [22,'🔮 DemandPredictionAgent: Forecasting zones...'],
+  [32,'🔗 MatchingAgent: BFS candidate pairs...'],
+  [44,'🧬 GAOptimiserAgent: Running genetic algorithm...'],
+  [56,'🗺️ RouteOptimizerAgent: A* path planning...'],
+  [65,'🧩 CSPSolverAgent: AC-3 constraint propagation...'],
+  [73,'♟️ NegotiationAgent: Alpha-Beta fare negotiation...'],
+  [82,'🛡️ SafetyAgent: Auditing all pairings...'],
+  [90,'💰 CostOptimiserAgent: Dynamic fare calculation...'],
+  [97,'🎯 OrchestratorAgent: Finalising results...'],
+];
+
+// ════════════════════════════════════════════════════════════
+//  UTILITIES
+// ════════════════════════════════════════════════════════════
+function toast(msg,type='i'){
+  const t=document.createElement('div');
+  t.className=`tmsg t${type}`;t.textContent=msg;
+  document.getElementById('toast').appendChild(t);
+  setTimeout(()=>t.remove(),4000);
+}
+async function api(url,method='GET',body=null){
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  try{const r=await fetch(url,opts);return await r.json();}
+  catch(e){toast('Network error: '+e.message,'e');return {};}
+}
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+}
+function stab(showId,hideId,btn){
+  document.getElementById(showId).style.display='';
+  document.getElementById(hideId).style.display='none';
+  btn.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+}
+function dbTab(showId,btn){
+  ['db-users','db-rides','db-bookings','db-sessions'].forEach(id=>{
+    document.getElementById(id).style.display=id===showId?'':'none';
+  });
+  document.querySelectorAll('.db-tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  if(showId==='db-users')loadUsers();
+  else if(showId==='db-rides')loadRides();
+  else if(showId==='db-bookings')loadBookings();
+  else if(showId==='db-sessions')loadSessions();
+}
+function openModal(id){
+  document.getElementById(id).classList.add('on');
+  if(id==='modal-add-ride')populateRideModal();
+  if(id==='modal-add-booking')populateBookingModal();
+}
+function closeModal(id){document.getElementById(id).classList.remove('on');}
+function closeModalOverlay(e,id){if(e.target===e.currentTarget)closeModal(id);}
+function stars(r){return '★'.repeat(Math.round(r||0))+'☆'.repeat(5-Math.round(r||0));}
+function fmtDate(s){if(!s)return '—';try{return new Date(s).toLocaleString('en-PK',{dateStyle:'short',timeStyle:'short'});}catch{return s;}}
+function statusBadge(s){return`<span class="sbadge sb-${s}">${s}</span>`;}
+function roleBadge(r){return`<span class="sbadge sb-${r}">${r}</span>`;}
+
+// ════════════════════════════════════════════════════════════
+//  NOTIFICATION PANEL
+// ════════════════════════════════════════════════════════════
+function toggleNotifPanel(){
+  _notifPanelOpen=!_notifPanelOpen;
+  document.getElementById('notif-panel').classList.toggle('open',_notifPanelOpen);
+  if(_notifPanelOpen)loadNotifications();
+}
+async function loadNotifications(){
+  const uid='U001'; // Demo user — in prod use session
+  const notifs=await api(`/api/db/notifications/${uid}`);
+  const list=document.getElementById('notif-list');
+  const unread=notifs.filter?.(n=>!n.read)||[];
+  const badge=document.getElementById('notif-count');
+  if(unread.length>0){badge.textContent=unread.length;badge.style.display='grid';}
+  else{badge.style.display='none';}
+  if(!notifs.length){list.innerHTML='<div class="empty"><div class="eico">🔕</div>No notifications</div>';return;}
+  list.innerHTML=notifs.map(n=>`
+    <div class="notif-item ${n.read?'read':'unread'}">
+      <div class="notif-type">${n.type.replace(/_/g,' ')}</div>
+      <div class="notif-title">${n.title}</div>
+      <div class="notif-msg">${n.message}</div>
+      <div class="notif-time">${fmtDate(n.created_at)}</div>
+    </div>`).join('');
+}
+async function markNotifsRead(){
+  await api('/api/db/notifications/U001/read','POST');
+  loadNotifications();
+  toast('All notifications marked as read','s');
+}
+
+// ════════════════════════════════════════════════════════════
+//  DASHBOARD — MAP & PIPELINE
+// ════════════════════════════════════════════════════════════
+async function loadGraph(){
+  const d=await api('/api/graph');
+  _graphData=d;
+  drawCityMap(d,_lastReport?.groups||[],[],[]);
+}
+async function refreshState(){
+  const s=await api('/api/state');
+  if(!s||!s.drivers)return;
+  document.getElementById('dcnt').textContent=s.drivers.length;
+  document.getElementById('pcnt').textContent=s.passengers.length;
+  const dul=document.getElementById('d-ul');
+  const pul=document.getElementById('p-ul');
+  dul.innerHTML=s.drivers.length?s.drivers.map(d=>`
+    <div class="ucard">
+      <div class="uav uav-d">${d.name[0]}</div>
+      <div class="uinfo"><div class="uname">${d.name}</div><div class="uroute">${d.pickup} → ${d.dropoff} · ${d.capacity} seats</div></div>
+      <button class="udel" onclick="removeUser('driver','${d.id}')">✕</button>
+    </div>`).join(''):'<div class="empty"><div class="eico">🚘</div>No drivers</div>';
+  pul.innerHTML=s.passengers.length?s.passengers.map(p=>`
+    <div class="ucard">
+      <div class="uav uav-p">${p.name[0]}</div>
+      <div class="uinfo"><div class="uname">${p.name}</div><div class="uroute">${p.pickup} → ${p.dropoff} · ${p.seats} seat(s)</div></div>
+      <button class="udel" onclick="removeUser('passenger','${p.id}')">✕</button>
+    </div>`).join(''):'<div class="empty"><div class="eico">🧑</div>No passengers</div>';
+  const btn=document.getElementById('run-btn');
+  btn.disabled=s.running;
+  if(s.running)pollResults();
+}
+async function removeUser(type,id){
+  await api(`/api/remove_${type}/${id}`,'DELETE');
+  refreshState();
+}
+async function addDriver(){
+  const name=document.getElementById('d-name').value.trim();
+  if(!name){toast('Enter a name','w');return;}
+  const r=await api('/api/add_driver','POST',{
+    name,pickup:document.getElementById('d-pu').value,
+    dropoff:document.getElementById('d-do').value,
+    tw_start:document.getElementById('d-tws').value,
+    tw_end:document.getElementById('d-twe').value,
+    capacity:document.getElementById('d-cap').value,
+    rating:document.getElementById('d-rat').value,
+    fuel_eff:document.getElementById('d-fe').value,
+  });
+  if(r.ok){document.getElementById('d-name').value='';toast(`Driver added (${r.id})`,'s');refreshState();}
+}
+async function addPassenger(){
+  const name=document.getElementById('p-name').value.trim();
+  if(!name){toast('Enter a name','w');return;}
+  const r=await api('/api/add_passenger','POST',{
+    name,pickup:document.getElementById('p-pu').value,
+    dropoff:document.getElementById('p-do').value,
+    tw_start:document.getElementById('p-tws').value,
+    tw_end:document.getElementById('p-twe').value,
+    seats:document.getElementById('p-seats').value,
+    max_detour:document.getElementById('p-det').value,
+  });
+  if(r.ok){document.getElementById('p-name').value='';toast(`Passenger added (${r.id})`,'s');refreshState();}
+}
+async function generateDemo(){
+  const r=await api('/api/generate_demo','POST',{
+    drivers:document.getElementById('dm-d').value,
+    passengers:document.getElementById('dm-p').value,
+    hour:document.getElementById('dm-h').value,
+    seed:document.getElementById('dm-s').value,
+  });
+  if(r.ok){toast(`Generated: ${r.drivers} drivers · ${r.passengers} passengers`,'s');refreshState();}
+}
+async function clearAll(){
+  await api('/api/clear','POST');
+  _lastReport=null;
+  document.getElementById('welcome').style.display='';
+  document.getElementById('dash-res').style.display='none';
+  document.getElementById('prog-wrap').style.display='none';
+  refreshState();
+  toast('Cleared all session data','i');
+}
+async function runPipeline(){
+  const r=await api('/api/run','POST',{
+    hour:document.getElementById('rh').value,
+    weather:document.getElementById('rw').value,
+    pop_size:document.getElementById('rpop').value,
+    generations:document.getElementById('rgen').value,
+  });
+  if(!r.ok){toast(r.error||'Error','e');return;}
+  document.getElementById('run-btn').disabled=true;
+  document.getElementById('prog-wrap').style.display='';
+  toast('Pipeline started…','i');
+  let step=0;
+  const prog=document.getElementById('prog-fill');
+  const lbl=document.getElementById('prog-lbl');
+  const iv=setInterval(()=>{
+    if(step<PROG_STEPS.length){const[pct,msg]=PROG_STEPS[step++];prog.style.width=pct+'%';lbl.textContent=msg;}
+  },1200);
+  pollResults(iv);
+}
+async function pollResults(iv){
+  const check=setInterval(async()=>{
+    const s=await api('/api/status');
+    if(!s.running&&s.has_result){
+      clearInterval(check);if(iv)clearInterval(iv);
+      document.getElementById('prog-fill').style.width='100%';
+      document.getElementById('prog-lbl').textContent='✓ Pipeline complete!';
+      setTimeout(()=>{document.getElementById('prog-wrap').style.display='none';},1200);
+      loadResults();
+    }
+  },1500);
+}
+async function loadResults(){
+  const d=await api('/api/results');
+  if(!d.ready)return;
+  _lastReport=d;
+  document.getElementById('welcome').style.display='none';
+  document.getElementById('dash-res').style.display='';
+  if(_graphData)drawCityMap(_graphData,d.groups,
+    d.summary?.drivers||[],d.summary?.passengers||[]);
+  renderStats(d.summary,'stat-grid');
+  renderDemand(d.demand);
+  renderGroups(d.groups,'rg-wrap');
+  renderUnmatched(d.unmatched,'unm-card','unm-list');
+  renderTimeline(d.events,'dash-timeline');
+  // Results page
+  document.getElementById('no-results').style.display='none';
+  document.getElementById('results-content').style.display='';
+  renderStats(d.summary,'res-stat-grid');
+  renderAlgoCmp(d.algo_cmp);
+  renderGA(d.ga_hist,d.ga_stats);
+  renderLog(d.agent_logs,'res-log');
+  renderCharts(d.charts);
+  // Agents page
+  renderAgentsResult(d);
+  toast('Pipeline complete!','s');
+}
+</script>
+<script>
+// ════════════════════════════════════════════════════════════
+//  RENDER FUNCTIONS
+// ════════════════════════════════════════════════════════════
+function renderStats(s,gridId){
+  if(!s)return;
+  const cells=[
+    {v:s.ride_groups??'—',l:'Ride Groups Formed',c:''},
+    {v:s.matched??'—',l:'Passengers Matched',c:'sg'},
+    {v:s.unmatched??'—',l:'Unmatched',c:'sr'},
+    {v:`${s.avg_utilisation??0}%`,l:'Avg Seat Utilisation',c:'sb'},
+    {v:`${s.total_distance??0} km`,l:'Total Route Distance',c:'sp'},
+    {v:`${s.co2_saved??0} kg`,l:'CO₂ Saved',c:'sg'},
+    {v:`₨${s.avg_fare_pkr??0}`,l:'Avg Fare per Person',c:'sa'},
+    {v:s.ga_fitness?.toFixed(4)??'—',l:'GA Best Fitness',c:''},
+    {v:s.csp_violations??0,l:'CSP Violations',c:'sr'},
+    {v:s.candidate_pairs??'—',l:'BFS Candidate Pairs',c:'sb'},
+    {v:s.safety_warnings??0,l:'Safety Warnings',c:'sa'},
+    {v:`${s.pipeline_time?.toFixed(2)??'—'}s`,l:'Pipeline Time',c:'sp'},
+  ];
+  document.getElementById(gridId).innerHTML=cells.map(c=>`
+    <div class="sc ${c.c}"><div class="sv">${c.v}</div><div class="sl">${c.l}</div></div>`).join('');
+}
+function renderDemand(demand){
+  if(!demand||!Object.keys(demand).length)return;
+  const lvlClass={High:'dh',Medium:'dm',Low:'dl'};
+  document.getElementById('dem-grid').innerHTML=Object.entries(demand).slice(0,8).map(([zone,info])=>`
+    <div class="dzone">
+      <div class="dname">${zone.replace(/_/g,' ')}</div>
+      <div class="dlvl ${lvlClass[info.demand]||'dl'}">${info.demand||'—'}</div>
+      <div class="deta">ETA: ${info.eta_minutes||'?'} min · ${info.demand_score?.toFixed(2)||'?'}</div>
+      <div class="pbars">
+        ${['low','medium','high'].map(l=>`<div class="pbrow"><div class="pbl">${l[0].toUpperCase()}</div><div class="pbtrack"><div class="pbfill pb-${l}" style="width:${info.probabilities?.[l]||0}%"></div></div></div>`).join('')}
+      </div>
+      <div class="drec">${info.recommendation||''}</div>
+    </div>`).join('');
+}
+function renderGroups(groups,wrId){
+  if(!groups?.length){document.getElementById(wrId).innerHTML='<div class="empty"><div class="eico">🚗</div>No ride groups formed</div>';return;}
+  document.getElementById(wrId).innerHTML=groups.map((g,i)=>{
+    const col=GRP_COLORS[i%GRP_COLORS.length];
+    const util=g.seats_total?Math.round(g.seats_used/g.seats_total*100):0;
+    return`<div class="rgcard">
+      <div class="rghead">
+        <div>
+          <div class="rgid">#${g.group_id}</div>
+          <div style="font-size:.82rem;font-weight:700;margin-top:2px">🚘 ${g.driver_name}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="rgst">${g.status}</div>
+          <div style="font-size:.65rem;color:var(--muted);margin-top:3px">⭐${g.driver_rating?.toFixed(1)||'?'}</div>
+        </div>
+      </div>
+      <div class="rgbody">
+        <div><div class="rgl">Passengers</div>
+          <div class="ptags">${g.passengers.map(p=>`<span class="ptag">${p.name} (${p.pickup}→${p.dropoff})</span>`).join('')}</div></div>
+        <div>
+          <div class="rgl">Trip Stats</div>
+          <div style="font-size:.78rem">${g.distance_km} km · ${g.time_min} min</div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--teal);margin-top:2px">₨${g.cost_pkr}/person</div>
+          <div class="sbar"><div class="sfill" style="width:${util}%;background:${col}"></div></div>
+          <div style="font-size:.63rem;color:var(--muted);margin-top:2px">${g.seats_used}/${g.seats_total} seats · ${util}% utilisation</div>
+          <div class="co2badge">🌿 ~${(g.distance_km*0.089).toFixed(1)} kg CO₂ saved</div>
+        </div>
+        <div class="rgroute">${g.route.map((s,j)=>j?`<span class="rgarr">→</span>${s}`:s).join('')}</div>
+      </div>
+    </div>`;}).join('');
+}
+function renderUnmatched(list,cardId,listId){
+  const card=document.getElementById(cardId);
+  if(!list?.length){card.style.display='none';return;}
+  card.style.display='';
+  document.getElementById(listId).innerHTML=list.map(u=>`
+    <div class="unm">⚠️ <strong>${u.name}</strong> — ${u.pickup} → ${u.dropoff} (no compatible driver found)</div>`).join('');
+}
+function renderTimeline(events,containerId){
+  const c=document.getElementById(containerId);
+  if(!events?.length){c.innerHTML='<div style="color:var(--muted);font-size:.76rem;padding:10px">No timeline events yet.</div>';return;}
+  c.innerHTML=events.map((e,i)=>`
+    <div class="tl-item">
+      <div class="tl-dot ${e.type||'info'}"></div>
+      <div class="tl-header">
+        <span class="tl-icon">${e.icon||'•'}</span>
+        <span class="tl-agent">${e.agent||'System'}</span>
+        <span class="tl-ts">${e.timestamp||''}</span>
+      </div>
+      <div class="tl-title">${e.title||''}</div>
+      <div class="tl-detail">${e.detail||''}</div>
+      ${e.data?`<span class="tl-toggle" onclick="toggleTld(${i})">▶ Show data</span><div class="tl-data" id="tld-${i}" style="display:none">${JSON.stringify(e.data,null,2)}</div>`:''}
+    </div>`).join('');
+}
+function toggleTld(idx){const d=document.getElementById(`tld-${idx}`);d.style.display=d.style.display?'':'none';}
+function renderLog(logs,boxId){
+  const b=document.getElementById(boxId);
+  if(!logs?.length){b.innerHTML='<div style="color:var(--muted)">No logs.</div>';return;}
+  const cls={action:'lo',decision:'lb',warning:'ly',info:'lm',success:'lg'};
+  b.innerHTML=logs.map(l=>`<div class="${cls[l.type]||'lm'}">[${l.agent||'?'}] ${l.message||l}</div>`).join('');
+  b.scrollTop=b.scrollHeight;
+}
+function renderAlgoCmp(rows){
+  if(!rows?.length){document.getElementById('algo-cmp-body').innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted)">No data</td></tr>';return;}
+  document.getElementById('algo-cmp-body').innerHTML=rows.map(r=>`
+    <tr>
+      <td class="aw">${r.route}</td>
+      <td class="mono">${r.astar?.cost?.toFixed(2)||'—'}<span class="ab">A*</span></td>
+      <td class="mono">${r.astar?.explored||'—'}</td>
+      <td class="mono">${r.bfs?.cost?.toFixed(2)||'—'}</td>
+      <td class="mono">${r.bfs?.explored||'—'}</td>
+      <td class="mono">${r.greedy?.cost?.toFixed(2)||'—'}</td>
+      <td class="mono">${r.greedy?.explored||'—'}</td>
+    </tr>`).join('');
+}
+function renderGA(hist,stats){
+  const cv=document.getElementById('ga-cv');if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height,pad=38;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#07111e';ctx.fillRect(0,0,W,H);
+  if(!hist?.length)return;
+  const maxF=Math.max(...hist.map(h=>h.best)),minF=Math.min(...hist.map(h=>h.avg));
+  const xS=v=>pad+(v/(hist.length-1||1))*(W-pad*2);
+  const yS=v=>H-pad-(v-minF)/(maxF-minF+1e-9)*(H-pad*2);
+  ctx.beginPath();ctx.strokeStyle='#00d4b4';ctx.lineWidth=2;
+  hist.forEach((h,i)=>{i?ctx.lineTo(xS(i),yS(h.best)):ctx.moveTo(xS(0),yS(h.best));});
+  ctx.stroke();
+  ctx.beginPath();ctx.strokeStyle='#4f8ef7';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+  hist.forEach((h,i)=>{i?ctx.lineTo(xS(i),yS(h.avg)):ctx.moveTo(xS(0),yS(h.avg));});
+  ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#506880';ctx.font='9px JetBrains Mono';ctx.textAlign='center';
+  ctx.fillText('Generation',W/2,H-8);
+  ctx.fillStyle='#00d4b4';ctx.fillRect(pad,10,14,8);
+  ctx.fillStyle='#506880';ctx.textAlign='left';ctx.fillText('Best',pad+18,18);
+  ctx.fillStyle='#4f8ef7';ctx.fillRect(pad+65,10,14,8);
+  ctx.fillStyle='#506880';ctx.fillText('Avg',pad+83,18);
+  if(stats)document.getElementById('ga-stats-row').innerHTML=
+    `Generations: <strong style="color:var(--teal)">${stats.generations||hist.length}</strong> · Best Fitness: <strong style="color:var(--teal)">${stats.best_fitness?.toFixed(4)||hist[hist.length-1]?.best?.toFixed(4)||'—'}</strong> · Convergence Gen: <strong style="color:var(--blue)">${stats.convergence_gen||'—'}</strong>`;
+}
+function renderCharts(charts){
+  const w=document.getElementById('res-charts');
+  w.innerHTML=Object.entries(charts).filter(([,v])=>v).map(([k,v])=>`
+    <div><div style="font-size:.67rem;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.06em;margin-bottom:6px">${k.replace(/_/g,' ')}</div>
+    <img src="data:image/png;base64,${v}" class="imgcard"></div>`).join('');
+}
+function renderAgentsResult(d){
+  renderAgentCards();
+  if(d.nego_outcomes?.length){
+    document.getElementById('nego-card').style.display='';
+    document.getElementById('nego-tbody').innerHTML=d.nego_outcomes.map(n=>`
+      <tr>
+        <td>${n.driver}</td><td>${n.passenger}</td>
+        <td class="mono">${n.utility?.toFixed(3)||'—'}</td>
+        <td><span class="${n.outcome==='agreed'?'tag-agree':'tag-reject'}">${n.outcome}</span></td>
+        <td class="mono">₨${n.base_fare||'—'}</td>
+        <td class="mono">₨${n.negotiated_fare||'—'}</td>
+        <td style="font-size:.72rem">${n.reason||''}</td>
+      </tr>`).join('');
+  }
+  if(d.safety_warnings?.length){
+    document.getElementById('safety-card').style.display='';
+    document.getElementById('safety-content').innerHTML=d.safety_warnings.map(w=>`
+      <div style="padding:8px 12px;background:rgba(240,165,0,.06);border:1px solid rgba(240,165,0,.2);border-radius:var(--r3);margin-bottom:6px;font-size:.76rem">
+        <span class="tag-warn">${w.level||'warning'}</span> <strong style="margin-left:8px">${w.message||w}</strong>
+      </div>`).join('');
+  }
+  if(d.fare_table?.length){
+    document.getElementById('cost-card').style.display='';
+    document.getElementById('cost-tbody').innerHTML=d.fare_table.map(f=>`
+      <tr>
+        <td>${f.driver||'—'}</td><td>${f.passengers||'—'}</td>
+        <td class="mono">${f.distance||'—'} km</td><td class="mono">${f.fuel_litres?.toFixed(2)||'—'} L</td>
+        <td class="mono">${f.surge_multiplier?.toFixed(2)||'1.0'}×</td>
+        <td class="mono">${f.utilisation||'—'}%</td>
+        <td class="mono" style="color:var(--teal)">₨${f.fare_per_person||'—'}</td>
+        <td class="mono" style="color:var(--green)">~${f.co2_saved?.toFixed(2)||'0'} kg</td>
+      </tr>`).join('');
+  }
+  if(d.traffic_intel&&Object.keys(d.traffic_intel).length){
+    document.getElementById('traffic-card').style.display='';
+    const ti=d.traffic_intel;
+    document.getElementById('traffic-content').innerHTML=`
+      <div class="sgrid" style="margin-bottom:12px">
+        ${Object.entries(ti.hotspots||{}).slice(0,6).map(([k,v])=>`
+          <div class="sc sa"><div class="sv" style="font-size:1rem">${v.toFixed(1)}×</div><div class="sl">${k.replace(/_/g,' ')}</div></div>`).join('')}
+      </div>
+      <div style="font-size:.76rem;color:var(--text2)">${ti.summary||''}</div>`;
+  }
+  renderLog(d.agent_logs,'agent-full-log');
+}
+function renderAgentCards(){
+  document.getElementById('agent-grid').innerHTML=AGENT_DEFS.map(a=>`
+    <div class="agent-card ${a.cls}">
+      <div class="agent-icon">${a.icon}</div>
+      <div class="agent-name">${a.name}</div>
+      <div class="agent-role">${a.role}</div>
+      <div><span class="agent-algo">${a.algo}</span></div>
+    </div>`).join('');
+}
+</script>
+<script>
+// ════════════════════════════════════════════════════════════
+//  DATABASE PAGE
+// ════════════════════════════════════════════════════════════
+async function loadDB(){
+  loadAnalytics();loadUsers();
+}
+async function loadAnalytics(){
+  const d=await api('/api/db/analytics');
+  if(!d)return;
+  const grid=document.getElementById('db-analytics');
+  const items=[
+    {v:d.total_users,l:'Users',c:'color:var(--teal)'},
+    {v:d.total_rides,l:'Rides Posted',c:'color:var(--blue)'},
+    {v:d.total_bookings,l:'Bookings',c:'color:var(--purple)'},
+    {v:d.completed_rides,l:'Completed Rides',c:'color:var(--green)'},
+    {v:`${d.co2_saved_kg} kg`,l:'Total CO₂ Saved',c:'color:var(--green)'},
+    {v:d.avg_rating||'—',l:'Avg User Rating',c:'color:var(--amber)'},
+    {v:`₨${d.total_revenue_pkr||0}`,l:'Revenue Processed',c:'color:var(--teal)'},
+    {v:d.match_sessions||0,l:'AI Sessions Run',c:'color:var(--purple)'},
+    {v:d.algo_runs||0,l:'Algo Visualisations',c:'color:var(--blue)'},
+  ];
+  grid.innerHTML=items.map(i=>`
+    <div class="ana-card">
+      <div class="ana-val" style="${i.c}">${i.v}</div>
+      <div class="ana-lbl">${i.l}</div>
+    </div>`).join('');
+}
+async function loadUsers(){
+  const role=document.getElementById('user-role-filter')?.value||'';
+  const url='/api/db/users'+(role?`?role=${role}`:'');
+  const users=await api(url);
+  _dbUsers=users||[];
+  renderUsersTable(_dbUsers);
+}
+function renderUsersTable(users){
+  const tbody=document.getElementById('users-tbody');
+  if(!users?.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">No users found</td></tr>';return;}
+  tbody.innerHTML=users.map(u=>`
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:9px">
+          <div class="av-circle" style="background:${u.avatar_color||'#4f8ef7'}22;color:${u.avatar_color||'#4f8ef7'}">${u.name?.[0]||'?'}</div>
+          <div>
+            <div style="font-weight:600;font-size:.8rem">${u.name} ${u.verified?'<span class="verified">✓</span>':''}</div>
+            <div style="font-size:.65rem;color:var(--muted)">${u.id}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-size:.75rem">${u.email}</td>
+      <td style="font-size:.75rem;color:var(--muted)">${u.phone||'—'}</td>
+      <td>${roleBadge(u.role)}</td>
+      <td><span style="color:var(--amber)">${stars(u.rating)}</span> <span style="font-family:var(--mono);font-size:.73rem">${u.rating?.toFixed(1)||'5.0'}</span></td>
+      <td class="mono">${u.total_rides||0}</td>
+      <td>${u.verified?'<span class="sbadge sb-active">✓ Verified</span>':'<span class="sbadge sb-pending">Unverified</span>'}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="act-btn" onclick="viewUser('${u.id}')">View</button>
+        <button class="act-btn danger" onclick="toast('Delete not available in demo','w')">Delete</button>
+      </div></td>
+    </tr>`).join('');
+}
+function filterUsers(){
+  const q=(document.getElementById('user-search')?.value||'').toLowerCase();
+  const role=document.getElementById('user-role-filter')?.value||'';
+  const filtered=_dbUsers.filter(u=>{
+    const matchQ=!q||(u.name||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q);
+    const matchR=!role||u.role===role||u.role==='both';
+    return matchQ&&matchR;
+  });
+  renderUsersTable(filtered);
+}
+async function viewUser(uid){
+  const u=await api(`/api/db/users/${uid}`);
+  if(!u||u.error){toast('User not found','e');return;}
+  toast(`Viewing ${u.name} — ${u.rides?.as_driver?.length||0} rides as driver`,'i');
+}
+
+async function loadRides(){
+  const status=document.getElementById('ride-status-filter')?.value||'';
+  const url='/api/db/rides'+(status?`?status=${status}`:'');
+  const rides=await api(url);
+  _dbRides=rides||[];
+  renderRidesTable(_dbRides);
+}
+function renderRidesTable(rides){
+  const tbody=document.getElementById('rides-tbody');
+  if(!rides?.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">No rides found</td></tr>';return;}
+  tbody.innerHTML=rides.map(r=>`
+    <tr>
+      <td class="mono" style="font-size:.73rem">${r.id}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:7px">
+          <div class="av-circle" style="background:${r.avatar_color||'#4f8ef7'}22;color:${r.avatar_color||'#4f8ef7'};font-size:.65rem">${r.driver_name?.[0]||'?'}</div>
+          <div>
+            <div style="font-weight:600;font-size:.79rem">${r.driver_name||'—'}</div>
+            <div style="font-size:.64rem;color:var(--muted)">${r.make||''} ${r.model||''} · ${r.plate||''}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div style="font-weight:600;font-size:.79rem">${r.origin} → ${r.destination}</div>
+        <div style="font-size:.64rem;color:var(--muted)">${r.distance_km||0} km</div>
+      </td>
+      <td class="mono" style="font-size:.72rem">${fmtDate(r.departure_time)}</td>
+      <td><span style="font-family:var(--mono)">${r.seats_available}/${r.seats_total}</span></td>
+      <td><span style="color:var(--teal);font-family:var(--mono);font-weight:600">₨${r.fare_per_seat}</span></td>
+      <td>${statusBadge(r.status)}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="act-btn" onclick="viewRide('${r.id}')">Details</button>
+        <button class="act-btn" onclick="updateRideStatus('${r.id}')">Update</button>
+      </div></td>
+    </tr>`).join('');
+}
+function filterRides(){
+  const q=(document.getElementById('ride-search')?.value||'').toLowerCase();
+  const status=document.getElementById('ride-status-filter')?.value||'';
+  const filtered=_dbRides.filter(r=>{
+    const matchQ=!q||(r.origin||'').toLowerCase().includes(q)||(r.destination||'').toLowerCase().includes(q);
+    const matchS=!status||r.status===status;
+    return matchQ&&matchS;
+  });
+  renderRidesTable(filtered);
+}
+async function viewRide(rid){
+  const ride=await api(`/api/db/rides/${rid}`);
+  if(!ride||ride.error){toast('Ride not found','e');return;}
+  document.getElementById('ride-detail-content').innerHTML=`
+    <div class="form-section">
+      <div class="form-section-title">Route Details</div>
+      <div class="r2">
+        <div><div class="rgl">From</div><div style="font-size:.9rem;font-weight:700">${ride.origin}</div></div>
+        <div><div class="rgl">To</div><div style="font-size:.9rem;font-weight:700">${ride.destination}</div></div>
+      </div>
+      <div class="r3" style="margin-top:10px">
+        <div><div class="rgl">Driver</div><div style="font-size:.82rem;font-weight:600">${ride.driver_name||'—'} ⭐${ride.driver_rating?.toFixed(1)||'?'}</div></div>
+        <div><div class="rgl">Vehicle</div><div style="font-size:.82rem">${ride.make||'?'} ${ride.model||''} (${ride.plate||'?'})</div></div>
+        <div><div class="rgl">Departure</div><div style="font-size:.82rem;font-family:var(--mono)">${fmtDate(ride.departure_time)}</div></div>
+      </div>
+      <div class="r3" style="margin-top:10px">
+        <div><div class="rgl">Seats</div><div style="font-size:.85rem;font-weight:600">${ride.seats_available}/${ride.seats_total} available</div></div>
+        <div><div class="rgl">Fare</div><div style="color:var(--teal);font-size:.9rem;font-weight:700">₨${ride.fare_per_seat}/seat</div></div>
+        <div><div class="rgl">Status</div>${statusBadge(ride.status)}</div>
+      </div>
+      ${ride.notes?`<div style="margin-top:10px;font-size:.76rem;color:var(--text2);background:var(--bg3);padding:8px 11px;border-radius:var(--r3)">📝 ${ride.notes}</div>`:''}
+    </div>
+    ${ride.bookings?.length?`
+    <div class="form-section">
+      <div class="form-section-title">Passengers (${ride.bookings.length})</div>
+      ${ride.bookings.map(b=>`
+        <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)">
+          <div class="av-circle" style="background:${b.avatar_color||'#9d6efd'}22;color:${b.avatar_color||'#9d6efd'};font-size:.65rem">${b.passenger_name?.[0]||'?'}</div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:.8rem">${b.passenger_name} ⭐${b.passenger_rating?.toFixed(1)||'?'}</div>
+            <div style="font-size:.65rem;color:var(--muted)">${b.pickup_stop} → ${b.dropoff_stop} · ${b.seats} seat(s)</div>
+          </div>
+          <div>${statusBadge(b.status)} ${statusBadge(b.payment_status)}</div>
+        </div>`).join('')}
+    </div>`:''}`;
+  openModal('modal-ride-detail');
+}
+async function updateRideStatus(rid){
+  const status=prompt('New status (scheduled / active / completed / cancelled):');
+  if(!status)return;
+  const r=await api(`/api/db/rides/${rid}/status`,'PATCH',{status});
+  if(r.ok){toast('Status updated','s');loadRides();}
+  else toast(r.error||'Error','e');
+}
+
+async function loadBookings(){
+  const rides=await api('/api/db/rides');
+  _dbBookings=[];
+  const tbody=document.getElementById('bookings-tbody');
+  if(!rides?.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">No bookings yet</td></tr>';return;}
+  let allBookings=[];
+  for(const ride of rides.slice(0,15)){
+    const detail=await api(`/api/db/rides/${ride.id}`);
+    if(detail?.bookings?.length){
+      allBookings=allBookings.concat(detail.bookings.map(b=>({...b,ride_origin:ride.origin,ride_dest:ride.destination})));
+    }
+  }
+  _dbBookings=allBookings;
+  renderBookingsTable(_dbBookings);
+}
+function renderBookingsTable(bookings){
+  const tbody=document.getElementById('bookings-tbody');
+  if(!bookings?.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">No bookings found</td></tr>';return;}
+  tbody.innerHTML=bookings.map(b=>`
+    <tr>
+      <td class="mono" style="font-size:.72rem">${b.id}</td>
+      <td style="font-size:.76rem">${b.ride_origin||'?'} → ${b.ride_dest||'?'}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:7px">
+          <div class="av-circle" style="background:${b.avatar_color||'#9d6efd'}22;color:${b.avatar_color||'#9d6efd'};font-size:.63rem">${b.passenger_name?.[0]||'?'}</div>
+          <div style="font-size:.78rem;font-weight:600">${b.passenger_name||'—'}</div>
+        </div>
+      </td>
+      <td class="mono">${b.seats}</td>
+      <td><span style="color:var(--teal);font-family:var(--mono);font-weight:600">₨${b.fare_paid||0}</span></td>
+      <td>${statusBadge(b.status)}</td>
+      <td>${statusBadge(b.payment_status||'unpaid')}</td>
+      <td><div style="display:flex;gap:5px">
+        ${b.payment_status!=='paid'?`<button class="act-btn" onclick="processPayment('${b.id}',${b.fare_paid||0})">Pay</button>`:''}
+        <button class="act-btn danger" onclick="toast('Cancel flow in prod','w')">Cancel</button>
+      </div></td>
+    </tr>`).join('');
+}
+function filterBookings(){
+  const q=(document.getElementById('booking-search')?.value||'').toLowerCase();
+  const filtered=_dbBookings.filter(b=>(b.passenger_name||'').toLowerCase().includes(q)||(b.id||'').toLowerCase().includes(q));
+  renderBookingsTable(filtered);
+}
+async function processPayment(bookingId,amount){
+  const method=prompt('Payment method (cash / jazzcash / easypaisa / card):')||'cash';
+  const r=await api('/api/db/payments','POST',{booking_id:bookingId,amount,method});
+  if(r.ok){toast(`Payment processed! Ref: ${r.reference}`,'s');loadBookings();}
+  else toast(r.error||'Error','e');
+}
+
+async function loadSessions(){
+  const d=await api('/api/db/analytics');
+  const tbody=document.getElementById('sessions-tbody');
+  tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:20px">
+    <div style="color:var(--text2);font-size:.8rem">Run the AI pipeline to generate match sessions.<br>Sessions are saved to SQLite automatically.</div>
+    <div style="margin-top:10px"><span class="sbadge sb-active">Total Sessions: ${d.match_sessions||0}</span></div>
+  </td></tr>`;
+}
+
+// ════════════════════════════════════════════════════════════
+//  MODAL ACTIONS
+// ════════════════════════════════════════════════════════════
+async function populateRideModal(){
+  const dt=new Date();dt.setDate(dt.getDate()+1);dt.setHours(8,0,0,0);
+  document.getElementById('mr-time').value=dt.toISOString().slice(0,16);
+  const drivers=await api('/api/db/users?role=driver');
+  const dSelect=document.getElementById('mr-driver');
+  dSelect.innerHTML='<option value="">— select driver —</option>'+
+    (drivers||[]).filter(u=>u.role==='driver'||u.role==='both').map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  document.getElementById('mr-vehicle').innerHTML=
+    '<option value="V001">Toyota Corolla 2020 · KHI-001</option>'+
+    '<option value="V002">Honda City 2019 · KHI-002</option>'+
+    '<option value="V003">Suzuki Swift 2021 · KHI-003</option>'+
+    '<option value="V005">Honda BR-V 2023 · KHI-005</option>';
+}
+async function submitAddUser(){
+  const name=document.getElementById('mu-name').value.trim();
+  const email=document.getElementById('mu-email').value.trim();
+  if(!name||!email){toast('Name and email are required','w');return;}
+  const r=await api('/api/db/users','POST',{
+    name,email,phone:document.getElementById('mu-phone').value,
+    role:document.getElementById('mu-role').value,
+  });
+  if(r.ok){closeModal('modal-add-user');toast(`User created: ${r.id}`,'s');loadDB();}
+  else toast(r.error||'Error','e');
+}
+async function submitAddRide(){
+  const driver_id=document.getElementById('mr-driver').value;
+  const vehicle_id=document.getElementById('mr-vehicle').value;
+  const origin=document.getElementById('mr-origin').value;
+  const destination=document.getElementById('mr-dest').value;
+  const departure_time=document.getElementById('mr-time').value;
+  const seats_total=document.getElementById('mr-seats').value;
+  const fare_per_seat=document.getElementById('mr-fare').value;
+  if(!driver_id||!origin||!destination||!departure_time){toast('Fill all required fields','w');return;}
+  const r=await api('/api/db/rides','POST',{
+    driver_id,vehicle_id,origin,destination,departure_time,
+    seats_total,fare_per_seat,
+    distance_km:document.getElementById('mr-dist').value,
+    weather:document.getElementById('mr-weather').value,
+    notes:document.getElementById('mr-notes').value,
+  });
+  if(r.ok){closeModal('modal-add-ride');toast(`Ride posted: ${r.id}`,'s');loadRides();}
+  else toast(r.error||'Error','e');
+}
+async function populateBookingModal(){
+  const passengers=await api('/api/db/users');
+  const rides=await api('/api/db/rides?status=scheduled');
+  document.getElementById('mb-pass').innerHTML='<option value="">— select passenger —</option>'+
+    (passengers||[]).filter(u=>u.role==='passenger'||u.role==='both')
+    .map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  document.getElementById('mb-ride').innerHTML='<option value="">— select ride —</option>'+
+    (rides||[]).map(r=>`<option value="${r.id}">${r.id}: ${r.origin}→${r.destination} (${r.seats_available} seats, ₨${r.fare_per_seat})</option>`).join('');
+}
+async function submitAddBooking(){
+  const ride_id=document.getElementById('mb-ride').value;
+  const passenger_id=document.getElementById('mb-pass').value;
+  const pickup_stop=document.getElementById('mb-pu').value;
+  const dropoff_stop=document.getElementById('mb-do').value;
+  const seats=document.getElementById('mb-seats').value;
+  const fare_paid=document.getElementById('mb-fare').value;
+  if(!ride_id||!passenger_id||!pickup_stop||!dropoff_stop){toast('Fill all required fields','w');return;}
+  const r=await api('/api/db/bookings','POST',{ride_id,passenger_id,seats,pickup_stop,dropoff_stop,fare_paid});
+  if(r.ok){closeModal('modal-add-booking');toast(`Booking confirmed: ${r.id}`,'s');loadBookings();}
+  else toast(r.error||'Error','e');
+}
+</script>
+<script>
+// ════════════════════════════════════════════════════════════
+//  CITY MAP
+// ════════════════════════════════════════════════════════════
+function drawCityMap(data,groups,drivers,passengers){
+  groups=groups||[];drivers=drivers||[];passengers=passengers||[];
+  const wrap=document.getElementById('map-wrap');
+  const W=wrap.clientWidth||800,H=wrap.clientHeight||390;
+  const svg=d3.select('#map-svg');svg.selectAll('*').remove();
+  svg.attr('viewBox',`0 0 ${W} ${H}`);
+  if(!data?.nodes?.length)return;
+  const nodes=data.nodes,edges=data.edges;
+  const xs=nodes.map(n=>n.x),ys=nodes.map(n=>n.y),pad=44;
+  const xS=d3.scaleLinear().domain([Math.min(...xs)-.5,Math.max(...xs)+.5]).range([pad,W-pad]);
+  const yS=d3.scaleLinear().domain([Math.min(...ys)-.5,Math.max(...ys)+.5]).range([H-pad,pad]);
+  const pos={};nodes.forEach(n=>{pos[n.id]={x:xS(n.x),y:yS(n.y)};});
+  const g=svg.append('g');
+  groups.forEach((grp,gi)=>{
+    const col=GRP_COLORS[gi%GRP_COLORS.length];
+    for(let i=0;i<grp.route.length-1;i++){
+      const a=pos[grp.route[i]],b=pos[grp.route[i+1]];
+      if(!a||!b)continue;
+      g.append('line').attr('x1',a.x).attr('y1',a.y).attr('x2',b.x).attr('y2',b.y)
+        .attr('stroke',col).attr('stroke-width',3.5).attr('opacity',.85).attr('stroke-linecap','round');
+    }
+  });
+  edges.forEach(e=>{
+    const a=pos[e.source],b=pos[e.target];if(!a||!b)return;
+    const tf=e.traffic||1;
+    const col=tf>=2.0?'#f04060':tf>=1.5?'#f0a500':tf>=1.3?'#8844cc':'#1a3555';
+    g.append('line').attr('x1',a.x).attr('y1',a.y).attr('x2',b.x).attr('y2',b.y)
+      .attr('stroke',col).attr('stroke-width',1.3).attr('opacity',.55);
+  });
+  const dPu=new Set(drivers.map?.(d=>d.pickup)||[]);
+  const pPu=new Set(passengers.map?.(p=>p.pickup)||[]);
+  nodes.forEach(n=>{
+    const p=pos[n.id];if(!p)return;
+    const isD=dPu.has(n.id),isP=pPu.has(n.id);
+    const col=isD?'#f0a500':isP?'#9d6efd':'#4f8ef7';
+    const r=isD||isP?8:4.5;
+    g.append('circle').attr('cx',p.x).attr('cy',p.y).attr('r',r)
+      .attr('fill',col).attr('stroke','#04090f').attr('stroke-width',1.8).attr('opacity',isD||isP?1:.7);
+    g.append('text').attr('x',p.x).attr('y',p.y-10).attr('text-anchor','middle')
+      .attr('font-size','8.5px').attr('fill',isD||isP?'#d8e8f8':'#506880')
+      .attr('font-family','Inter').text(n.id.replace(/_/g,' '));
+  });
+  svg.call(d3.zoom().scaleExtent([.4,5]).on('zoom',ev=>g.attr('transform',ev.transform)));
+}
+
+// ════════════════════════════════════════════════════════════
+//  ALGORITHM VISUALISER
+// ════════════════════════════════════════════════════════════
+async function runAlgo(){
+  clearInterval(_animTimer);
+  const src=document.getElementById('algo-src').value;
+  const dst=document.getElementById('algo-dst').value;
+  const alg=document.getElementById('algo-sel').value;
+  const d=await api('/api/algo/run','POST',{src,dst,algo:alg});
+  if(!d.ok){toast(d.error||'Error','e');return;}
+  _algoResult=d;
+  document.getElementById('step-counter').style.display='flex';
+  document.getElementById('step-val').textContent=d.trace.length;
+  document.getElementById('step-total').textContent=d.trace.length;
+  document.getElementById('algo-path-d').textContent=d.path.join(' → ')||'—';
+  document.getElementById('algo-cost-d').textContent=d.cost??'∞';
+  document.getElementById('algo-exp-d').textContent=d.explored;
+  renderAlgoTrace(d.trace);
+  drawAlgoMap(d.graph,d.path,[],src,dst);
+  toast(`${alg}: ${d.explored} nodes, cost ${d.cost} km, ${d.duration_ms?.toFixed(1)}ms`,'s');
+}
+async function animateAlgo(){
+  clearInterval(_animTimer);
+  const src=document.getElementById('algo-src').value;
+  const dst=document.getElementById('algo-dst').value;
+  const alg=document.getElementById('algo-sel').value;
+  const d=await api('/api/algo/run','POST',{src,dst,algo:alg});
+  if(!d.ok){toast(d.error||'Error','e');return;}
+  _algoResult=d;
+  document.getElementById('step-counter').style.display='flex';
+  document.getElementById('step-total').textContent=d.trace.length;
+  const visited=[];let step=0;
+  _animTimer=setInterval(()=>{
+    if(step>=d.trace.length){
+      clearInterval(_animTimer);
+      document.getElementById('algo-path-d').textContent=d.path.join(' → ')||'—';
+      document.getElementById('algo-cost-d').textContent=d.cost??'∞';
+      document.getElementById('algo-exp-d').textContent=d.explored;
+      drawAlgoMap(d.graph,d.path,visited,src,dst);
+      return;
+    }
+    const t=d.trace[step++];
+    if(t.node)visited.push(t.node);
+    document.getElementById('step-val').textContent=step;
+    document.getElementById('algo-exp-d').textContent=step;
+    drawAlgoMap(d.graph,[],visited,src,dst);
+  },110);
+}
+function stopAnim(){clearInterval(_animTimer);}
+function renderAlgoTrace(trace){
+  const box=document.getElementById('algo-trace');
+  box.innerHTML=trace.map(t=>{
+    let cls='tr-v',txt='';
+    if(t.direction==='forward'){cls='tr-f';txt=`[FWD] step ${t.step}: visit ${t.node}`;}
+    else if(t.direction==='backward'){cls='tr-b';txt=`[BWD] step ${t.step}: visit ${t.node}`;}
+    else if(t.type==='leaf'){cls='tr-l';txt=`[LEAF] node=${t.node} val=${t.value}`;}
+    else if(t.type==='max'){cls='tr-mx';txt=`[MAX] depth=${t.depth} val=${t.value} α=${t.alpha} β=${t.beta}`;}
+    else if(t.type==='min'){cls='tr-mn';txt=`[MIN] depth=${t.depth} val=${t.value} α=${t.alpha} β=${t.beta}`;}
+    else if(t.pruned){cls='tr-p';txt=`✂ PRUNED depth=${t.depth}`;}
+    else txt=`step ${t.step}: ${t.node}${t.g!==undefined?' g='+t.g:''}`+
+             `${t.h!==undefined?' h='+t.h:''}`+`${t.f!==undefined?' f='+t.f:''}`;
+    return`<div class="${cls}">${txt}</div>`;
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+}
+function drawAlgoMap(data,path,visited,src,dst){
+  path=path||[];visited=visited||[];src=src||'';dst=dst||'';
+  const svgEl=document.getElementById('algo-svg');if(!svgEl)return;
+  const wrap=document.getElementById('algo-map');
+  const W=wrap.clientWidth||750,H=wrap.clientHeight||380;
+  const svg=d3.select('#algo-svg');svg.selectAll('*').remove();
+  svg.attr('viewBox',`0 0 ${W} ${H}`);
+  const nodes=data.nodes,edges=data.edges;
+  const xs=nodes.map(n=>n.x),ys=nodes.map(n=>n.y),pad=44;
+  const xS=d3.scaleLinear().domain([Math.min(...xs)-.5,Math.max(...xs)+.5]).range([pad,W-pad]);
+  const yS=d3.scaleLinear().domain([Math.min(...ys)-.5,Math.max(...ys)+.5]).range([H-pad,pad]);
+  const pos={};nodes.forEach(n=>{pos[n.id]={x:xS(n.x),y:yS(n.y)};});
+  const g=svg.append('g');
+  const pathSet=new Set(path),visSet=new Set(visited);
+  edges.forEach(e=>{
+    const a=pos[e.source],b=pos[e.target];if(!a||!b)return;
+    const inPath=pathSet.has(e.source)&&pathSet.has(e.target);
+    g.append('line').attr('x1',a.x).attr('y1',a.y).attr('x2',b.x).attr('y2',b.y)
+      .attr('stroke',inPath?'#00d4b4':'#1a3555').attr('stroke-width',inPath?3:1.2).attr('opacity',inPath?.95:.5);
+  });
+  for(let i=0;i<path.length-1;i++){
+    const a=pos[path[i]],b=pos[path[i+1]];if(!a||!b)continue;
+    g.append('line').attr('x1',a.x).attr('y1',a.y).attr('x2',b.x).attr('y2',b.y)
+      .attr('stroke','#00d4b4').attr('stroke-width',3.5).attr('opacity',.95).attr('stroke-linecap','round');
+  }
+  nodes.forEach(n=>{
+    const p=pos[n.id];if(!p)return;
+    const isSrc=n.id===src,isDst=n.id===dst;
+    const inVis=visSet.has(n.id),inPath=pathSet.has(n.id);
+    const col=isSrc?'#f0a500':isDst?'#20b850':inPath?'#00d4b4':inVis?'#4f8ef7':'#1a3555';
+    const r=isSrc||isDst?9:inPath?7:inVis?5.5:4;
+    g.append('circle').attr('cx',p.x).attr('cy',p.y).attr('r',r)
+      .attr('fill',col).attr('stroke','#04090f').attr('stroke-width',1.8);
+    g.append('text').attr('x',p.x).attr('y',p.y-10).attr('text-anchor','middle')
+      .attr('font-size','8px').attr('fill',inPath||isSrc||isDst?'#d8e8f8':'#506880')
+      .attr('font-family','Inter').text(n.id.replace(/_/g,' '));
+  });
+  svg.call(d3.zoom().scaleExtent([.4,4]).on('zoom',ev=>g.attr('transform',ev.transform)));
+}
+
+async function runBenchmark(){
+  const src=document.getElementById('bm-src').value;
+  const dst=document.getElementById('bm-dst').value;
+  const d=await api('/api/algo/benchmark','POST',{src,dst});
+  if(!d.ok){toast(d.error,'e');return;}
+  const res=d.results;
+  const costs=Object.values(res).map(r=>r.cost).filter(c=>c!==null);
+  const bestCost=Math.min(...costs);
+  const TYPE={'A*':'Informed','IDA*':'Informed','BFS':'Uninformed','DFS':'Uninformed',
+               'Dijkstra':'Optimal','UCS':'Uninformed','Greedy':'Informed',
+               'Hill Climbing':'Local','Beam Search':'Informed','BiDir BFS':'Uninformed'};
+  document.getElementById('bench-body').innerHTML=Object.entries(res).map(([name,r])=>{
+    const best=r.cost===bestCost&&r.cost!==null;
+    return`<tr>
+      <td class="${best?'best':''}">${name}${best?'<span class="algobadge">BEST</span>':''}</td>
+      <td><span style="font-size:.68rem;color:var(--muted)">${TYPE[name]||''}</span></td>
+      <td class="${best?'best':''}" style="font-family:var(--mono)">${r.cost??'∞'}</td>
+      <td style="font-family:var(--mono)">${r.explored}</td>
+      <td style="font-family:var(--mono)">${r.hops}</td>
+      <td>${best?'<span style="color:var(--green)">✓ Optimal</span>':r.cost===null?'<span style="color:var(--red)">No path</span>':''}</td>
+    </tr>`;
+  }).join('');
+  toast(`Benchmark ${src}→${dst} complete`,'s');
+}
+
+async function runAB(){
+  const depth=document.getElementById('ab-depth').value;
+  const d=await api('/api/algo/alphabeta','POST',{depth:parseInt(depth)});
+  if(!d.ok)return;
+  document.getElementById('ab-result').textContent=`Optimal Value: ${d.best.toFixed(3)} (depth=${d.depth})`;
+  drawABTree(d.trace,d.depth,d.leaf_values);
+  const box=document.getElementById('ab-trace');
+  box.innerHTML=d.trace.map(t=>{
+    if(t.pruned)return`<div class="tr-p">✂ PRUNED @ depth=${t.depth} node=${t.node} — β(${t.beta})≤α(${t.alpha})</div>`;
+    if(t.type==='leaf')return`<div class="tr-l">[LEAF] node=${t.node} val=${t.value}</div>`;
+    const c=t.type==='max'?'tr-mx':'tr-mn';
+    return`<div class="${c}">[${(t.type||'').toUpperCase()}] depth=${t.depth} node=${t.node} val=${t.value} α=${t.alpha} β=${t.beta}</div>`;
+  }).join('');
+  box.scrollTop=0;
+  const pruned=d.trace.filter(t=>t.pruned).length;
+  toast(`Alpha-Beta: value=${d.best.toFixed(2)}, ${pruned} branches pruned`,'s');
+}
+function drawABTree(trace,depth,leaves){
+  const svg=d3.select('#ab-svg');svg.selectAll('*').remove();
+  const n=Math.pow(2,depth);
+  const W=Math.max(860,n*56),H=depth*78+68;
+  svg.attr('viewBox',`0 0 ${W} ${H}`).attr('width',W).attr('height',H);
+  const pruned=new Set(trace.filter(t=>t.pruned).map(t=>`${t.depth}-${t.node}`));
+  const vals={};trace.forEach(t=>{if(t.value!==undefined)vals[`${t.depth}-${t.node}`]=t.value;});
+  function nodePos(d,i){const s=W/Math.pow(2,d);return{x:s/2+i*s,y:42+d*70};}
+  function draw(d,i,px,py){
+    if(d>depth)return;
+    const {x,y}=nodePos(d,i);
+    const isMax=d%2===0;
+    const val=d===depth?(leaves[i%leaves.length]??0):vals[`${d}-${i}`];
+    const isPruned=pruned.has(`${d}-${i}`);
+    if(px!==null)svg.append('line').attr('x1',px).attr('y1',py+17).attr('x2',x).attr('y2',y-17)
+      .attr('stroke',isPruned?'rgba(240,165,0,.3)':'#1a3555').attr('stroke-width',isPruned?1:1.5).attr('stroke-dasharray',isPruned?'4,4':'none');
+    const col=d===depth?'#506880':isMax?'#20b850':'#f04060';
+    svg.append('circle').attr('cx',x).attr('cy',y).attr('r',18)
+      .attr('fill',col).attr('fill-opacity',isPruned?.08:.18).attr('stroke',col).attr('stroke-width',2);
+    if(isPruned)svg.append('text').attr('x',x).attr('y',y+4).attr('text-anchor','middle').attr('font-size','13px').attr('fill','#f0a500').text('✂');
+    else svg.append('text').attr('x',x).attr('y',y+4).attr('text-anchor','middle').attr('font-size','9.5px').attr('fill',col).attr('font-weight',700).attr('font-family','JetBrains Mono').text(val!==undefined?parseFloat(val).toFixed(1):(isMax?'MAX':'MIN'));
+    if(d<depth){draw(d+1,i*2,x,y);draw(d+1,i*2+1,x,y);}
+  }
+  draw(0,0,null,null);
+  [[18,'#20b850','MAX (Driver)'],[118,'#f04060','MIN (Passenger)'],[238,'#f0a500','Pruned ✂']].forEach(([cx,col,lbl])=>{
+    svg.append('circle').attr('cx',cx).attr('cy',H-13).attr('r',7).attr('fill',col).attr('fill-opacity',.2).attr('stroke',col).attr('stroke-width',1.5);
+    svg.append('text').attr('x',cx+12).attr('y',H-9).attr('font-size','10px').attr('fill',col).attr('font-family','Inter').text(lbl);
+  });
+}
+</script>
+<script>
+// ════════════════════════════════════════════════════════════
+//  ML ANALYTICS
+// ════════════════════════════════════════════════════════════
+async function loadML(){
+  if(_mlLoaded)return;
+  const poll=setInterval(async()=>{
+    const st=await api('/api/ml/status');
+    if(st.ready){
+      clearInterval(poll);
+      const d=await api('/api/ml/all');
+      if(d.ready){renderML(d);_mlLoaded=true;}
+    }
+  },700);
+}
+function renderML(d){
+  document.getElementById('ml-loading').style.display='none';
+  document.getElementById('ml-content').style.display='';
+  const eda=d.eda;
+  document.getElementById('eda-stats').innerHTML=Object.entries(eda.summary_stats).map(([f,s])=>`
+    <div class="sc sb"><div class="sv" style="font-size:1rem">${s.mean}</div>
+    <div class="sl">${f.replace(/_/g,' ')} mean</div>
+    <div style="font-size:.6rem;color:var(--muted);margin-top:2px">σ=${s.std} · [${s.min}, ${s.max}]</div></div>`).join('');
+  drawHistogram('hist-cv',eda.distance_distribution,'Trip Distance (km)','#4f8ef7');
+  drawHourChart('hour-cv',eda.match_rate_by_hour);
+  drawCorrMatrix('corr-cv',eda.correlation_matrix);
+  const clf=d.clf;
+  document.getElementById('clf-metrics').innerHTML=[
+    {k:'Random Forest Accuracy',v:(clf.rf_accuracy*100).toFixed(1)+'%',c:true},
+    {k:'Gradient Boosting Acc.',v:(clf.gb_accuracy*100).toFixed(1)+'%',c:true},
+    {k:'Ensemble Accuracy',v:(clf.ens_accuracy*100).toFixed(1)+'%',c:true},
+    {k:'Training Samples',v:clf.n_train,c:false},
+    {k:'Test Samples',v:clf.n_test,c:false},
+  ].map(r=>`<div class="mrow"><div class="mk">${r.k}</div><div class="mv" style="${r.c?'color:var(--teal)':''}">${r.v}</div></div>`).join('');
+  const imps=Object.entries(clf.feature_importances).sort((a,b)=>b[1]-a[1]);
+  const maxI=imps[0][1];
+  document.getElementById('feat-bars').innerHTML=imps.map(([f,v])=>`
+    <div class="frow">
+      <div class="fn">${f.replace(/_/g,' ')}</div>
+      <div class="ftrack"><div class="ffill" style="width:${(v/maxI*100).toFixed(0)}%;background:var(--teal)"></div></div>
+      <div class="fpct">${(v*100).toFixed(1)}%</div>
+    </div>`).join('');
+  const cm=clf.confusion_matrix;
+  document.getElementById('cm-wrap').innerHTML=`
+    <div style="text-align:center;font-size:.66rem;color:var(--muted);margin-bottom:4px">Predicted →</div>
+    <div class="cm">
+      <div class="cmcell cm-tn">${cm[0][0]}<div style="font-size:.56rem;margin-top:2px">TN</div></div>
+      <div class="cmcell cm-fp">${cm[0][1]}<div style="font-size:.56rem;margin-top:2px">FP</div></div>
+      <div class="cmcell cm-fn">${cm[1][0]}<div style="font-size:.56rem;margin-top:2px">FN</div></div>
+      <div class="cmcell cm-tp">${cm[1][1]}<div style="font-size:.56rem;margin-top:2px">TP</div></div>
+    </div>`;
+  document.getElementById('acc-bars').innerHTML=[
+    ['Random Forest',clf.rf_accuracy,'#4f8ef7'],
+    ['Gradient Boost',clf.gb_accuracy,'#9d6efd'],
+    ['Ensemble',clf.ens_accuracy,'#00d4b4'],
+  ].map(([n,v,c])=>`<div class="frow">
+    <div class="fn">${n}</div>
+    <div class="ftrack"><div class="ffill" style="width:${(v*100).toFixed(0)}%;background:${c}"></div></div>
+    <div class="fpct">${(v*100).toFixed(1)}%</div>
+  </div>`).join('');
+  const ensEl=document.getElementById('ens-acc');
+  if(ensEl)ensEl.textContent=(clf.ens_accuracy*100).toFixed(1)+'%';
+  drawPCA('pca-cv',d.pca);
+  const pEl=document.getElementById('pca-info');
+  if(pEl)pEl.innerHTML=`PCA Variance: PC1=<strong style="color:var(--teal)">${(d.pca.variance_explained[0]*100).toFixed(1)}%</strong> · PC2=<strong style="color:var(--blue)">${(d.pca.variance_explained[1]*100).toFixed(1)}%</strong>`;
+  drawClusters('cluster-svg',d.cluster,d.graph);
+  const cEl=document.getElementById('cluster-info');
+  if(cEl)cEl.innerHTML=`K-Means k=${d.cluster.k} · Silhouette: <strong style="color:var(--teal)">${d.cluster.silhouette}</strong>`;
+  const rm=d.rating;
+  document.getElementById('rating-metrics').innerHTML=[
+    {k:'R² Score',v:rm.r2},{k:'RMSE',v:rm.rmse},{k:'MAE',v:rm.mae}
+  ].map(r=>`<div class="mrow"><div class="mk">${r.k}</div><div class="mv" style="color:var(--amber)">${r.v}</div></div>`).join('');
+}
+function drawHistogram(id,dist,label,color){
+  const cv=document.getElementById(id);if(!cv)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,pad=32;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#07111e';ctx.fillRect(0,0,W,H);
+  const counts=dist.counts,edges=dist.edges,maxC=Math.max(...counts);
+  const bw=(W-pad*2)/counts.length;
+  counts.forEach((c,i)=>{
+    const bh=(c/maxC)*(H-pad*2),x=pad+i*bw,y=H-pad-bh;
+    const grad=ctx.createLinearGradient(0,y,0,H-pad);
+    grad.addColorStop(0,color);grad.addColorStop(1,color+'33');
+    ctx.fillStyle=grad;ctx.fillRect(x+1,y,bw-2,bh);
+  });
+  ctx.fillStyle='#506880';ctx.font='9px JetBrains Mono';ctx.textAlign='center';
+  ctx.fillText(edges[0]?.toFixed(0),pad,H-8);
+  ctx.fillText(edges[edges.length-1]?.toFixed(0),W-pad,H-8);
+  ctx.fillText(label,W/2,H-8);
+}
+function drawHourChart(id,hourData){
+  const cv=document.getElementById(id);if(!cv)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,pad=32;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#07111e';ctx.fillRect(0,0,W,H);
+  const vals=Object.entries(hourData).sort((a,b)=>+a[0]-+b[0]).map(([,v])=>v);
+  const maxV=Math.max(...vals)||1,bw=(W-pad*2)/vals.length;
+  vals.forEach((v,i)=>{
+    const bh=(v/100)*(H-pad*2),x=pad+i*bw,y=H-pad-bh;
+    const isRush=[7,8,9,17,18,19,20].includes(i);
+    const col=isRush?'#f04060':'#00d4b4';
+    const grad=ctx.createLinearGradient(0,y,0,H-pad);
+    grad.addColorStop(0,col);grad.addColorStop(1,col+'22');
+    ctx.fillStyle=grad;ctx.fillRect(x+1,y,bw-2,bh);
+  });
+  ctx.fillStyle='#506880';ctx.font='8px JetBrains Mono';ctx.textAlign='center';
+  [0,6,12,18,23].forEach(h=>{ctx.fillText(h+':00',pad+h*bw,H-8);});
+  ctx.fillText('Match Rate by Hour (%)',W/2,13);
+}
+function drawCorrMatrix(id,corrData){
+  const cv=document.getElementById(id);if(!cv)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#07111e';ctx.fillRect(0,0,W,H);
+  const fields=corrData.fields,mat=corrData.matrix,n=fields.length;
+  const pad=68,cw=(W-pad)/n,ch=(H-36)/n;
+  mat.forEach((row,r)=>{row.forEach((v,c)=>{
+    const x=pad+c*cw,y=36+r*ch;
+    const intensity=Math.abs(v);
+    const col=v>=0?`rgba(0,212,180,${intensity*.85})`:`rgba(240,64,96,${intensity*.85})`;
+    ctx.fillStyle=col;ctx.fillRect(x+1,y+1,cw-2,ch-2);
+    ctx.fillStyle=intensity>.4?'#04090f':'#d8e8f8';
+    ctx.font=`${Math.min(10,cw*.36)}px JetBrains Mono`;ctx.textAlign='center';
+    ctx.fillText(v.toFixed(2),x+cw/2,y+ch/2+3.5);
+  });});
+  ctx.fillStyle='#506880';ctx.font='9px Inter';ctx.textAlign='right';
+  fields.forEach((f,i)=>{ctx.fillText(f.replace(/_/g,' ').slice(0,12),pad-4,36+i*ch+ch/2+3);});
+  ctx.textAlign='center';
+  fields.forEach((f,i)=>{ctx.save();ctx.translate(pad+i*cw+cw/2,32);ctx.rotate(-.45);ctx.fillText(f.replace(/_/g,' ').slice(0,12),0,0);ctx.restore();});
+}
+function drawPCA(id,pca){
+  const cv=document.getElementById(id);if(!cv)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,pad=28;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#07111e';ctx.fillRect(0,0,W,H);
+  const xs=pca.x,ys=pca.y,labels=pca.labels;
+  const mnx=Math.min(...xs),mxx=Math.max(...xs),mny=Math.min(...ys),mxy=Math.max(...ys);
+  const xS=v=>pad+(v-mnx)/(mxx-mnx+1e-9)*(W-pad*2);
+  const yS=v=>H-pad-(v-mny)/(mxy-mny+1e-9)*(H-pad*2);
+  xs.forEach((x,i)=>{
+    ctx.beginPath();ctx.arc(xS(x),yS(ys[i]),2.5,0,Math.PI*2);
+    ctx.fillStyle=labels[i]===1?'rgba(0,212,180,.75)':'rgba(240,64,96,.5)';ctx.fill();
+  });
+  ctx.fillStyle='#00d4b4';ctx.beginPath();ctx.arc(pad+10,H-12,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#506880';ctx.font='10px Inter';ctx.textAlign='left';ctx.fillText('Matched',pad+18,H-8);
+  ctx.fillStyle='#f04060';ctx.beginPath();ctx.arc(pad+88,H-12,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#506880';ctx.fillText('No Match',pad+96,H-8);
+}
+function drawClusters(id,cluster,graph){
+  const svg=d3.select('#'+id);svg.selectAll('*').remove();
+  const el=document.getElementById(id);
+  const W=el.clientWidth||500,H=260;svg.attr('viewBox',`0 0 ${W} ${H}`);
+  const nodes=graph.nodes,edges=graph.edges;
+  const xs=nodes.map(n=>n.x),ys=nodes.map(n=>n.y),pad=34;
+  const xS=d3.scaleLinear().domain([Math.min(...xs)-.5,Math.max(...xs)+.5]).range([pad,W-pad]);
+  const yS=d3.scaleLinear().domain([Math.min(...ys)-.5,Math.max(...ys)+.5]).range([H-pad,pad]);
+  const ZCOLORS=['#00d4b4','#4f8ef7','#9d6efd','#f0a500','#20b850','#f04060'];
+  edges.forEach(e=>{
+    const a=nodes.find(n=>n.id===e.source),b=nodes.find(n=>n.id===e.target);if(!a||!b)return;
+    svg.append('line').attr('x1',xS(a.x)).attr('y1',yS(a.y)).attr('x2',xS(b.x)).attr('y2',yS(b.y))
+      .attr('stroke','#1a3555').attr('stroke-width',1).attr('opacity',.5);
+  });
+  nodes.forEach(n=>{
+    const lbl=cluster.labels[cluster.node_names.indexOf(n.id)]||0;
+    const col=ZCOLORS[lbl%ZCOLORS.length];
+    svg.append('circle').attr('cx',xS(n.x)).attr('cy',yS(n.y)).attr('r',7)
+      .attr('fill',col).attr('fill-opacity',.85).attr('stroke','#04090f').attr('stroke-width',1.5);
+    svg.append('text').attr('x',xS(n.x)).attr('y',yS(n.y)-9).attr('text-anchor','middle')
+      .attr('font-size','7.5px').attr('fill','#d8e8f8').attr('font-family','Inter').text(n.id.replace(/_/g,' '));
+  });
+  cluster.centres.forEach((c,i)=>{
+    svg.append('text').attr('x',xS(c[0])).attr('y',yS(c[1])).attr('text-anchor','middle')
+      .attr('font-size','13px').attr('fill',ZCOLORS[i%ZCOLORS.length]).text('✦');
+  });
+}
+async function predictMatch(){
+  const rec={
+    hour:parseFloat(document.getElementById('mp-hour').value),
+    distance:parseFloat(document.getElementById('mp-dist').value),
+    detour:parseFloat(document.getElementById('mp-det').value),
+    time_diff:parseFloat(document.getElementById('mp-td').value),
+    n_passengers:parseInt(document.getElementById('mp-np').value),
+    driver_rating:parseFloat(document.getElementById('mp-dr').value),
+    passenger_rating:4.0,weather_code:parseInt(document.getElementById('mp-wx').value),capacity:4,
+  };
+  const r=await api('/api/ml/predict_match','POST',rec);
+  const el=document.getElementById('match-res');
+  el.style.display='';el.className='pres '+(r.label===1?'pr-y':'pr-n');
+  el.textContent=`${r.verdict}  (confidence: ${(r.confidence*100).toFixed(1)}%)`;
+}
+async function predictRating(){
+  const r=await api('/api/ml/predict_rating','POST',{
+    distance:parseFloat(document.getElementById('pr-dist').value),
+    detour:parseFloat(document.getElementById('pr-det').value),
+    time_diff:parseFloat(document.getElementById('pr-td').value),
+    n_pass:parseInt(document.getElementById('pr-np').value),
+    weather:parseInt(document.getElementById('pr-wx').value),
+  });
+  const el=document.getElementById('rating-res');
+  el.style.display='';el.className='pres '+(r.predicted_rating>=4?'pr-y':'pr-n');
+  const strs='★'.repeat(Math.round(r.predicted_rating))+'☆'.repeat(5-Math.round(r.predicted_rating));
+  el.textContent=`Predicted Rating: ${r.predicted_rating} / 5  ${strs}`;
+}
+
+// ════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  loadGraph();
+  refreshState();
+  renderAgentCards();
+  loadML();
+  loadNotifications();
+  setInterval(refreshState,8000);
+  setInterval(loadNotifications,30000);
+});
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 7: RIDEBOT AI CHAT (RAG)
+══════════════════════════════════════════════════════════ -->
+<div id="p-chat" class="page">
+<div class="chat-layout">
+
+  <!-- Sidebar: sessions + suggestions -->
+  <div class="chat-sidebar">
+    <div class="chat-sidebar-header">
+      <div class="chat-sidebar-title">🤖 RideBot AI <span style="font-size:.58rem;padding:2px 6px;border-radius:8px;background:rgba(0,212,180,.1);border:1px solid rgba(0,212,180,.2);color:var(--teal);font-weight:600;margin-left:4px">RAG</span></div>
+      <div class="chat-rag-status">
+        <div class="rag-dot loading" id="rag-dot"></div>
+        <span id="rag-status-text">Initialising RAG engine...</span>
+      </div>
+      <button class="btn bteal" onclick="startNewSession()" style="font-size:.72rem;padding:6px 10px">+ New Conversation</button>
+    </div>
+
+    <div class="chat-suggestions">
+      <div class="chat-sugg-label">💡 Quick Questions</div>
+      <button class="sugg-btn" onclick="sendSuggestion(this.textContent)">🚗 How do I post a ride as a driver?</button>
+      <button class="sugg-btn" onclick="sendSuggestion(this.textContent)">💰 How is my fare calculated?</button>
+      <button class="sugg-btn" onclick="sendSuggestion(this.textContent)">🚦 What are Karachi's worst traffic areas?</button>
+      <button class="sugg-btn" onclick="sendSuggestion(this.textContent)">🛡️ What are the safety features for women?</button>
+      <button class="sugg-btn" onclick="sendSuggestion(this.textContent)">🧬 Explain the Genetic Algorithm used here</button>
+      <button class="sugg-btn" onclick="sendSuggestion(this.textContent)">🌿 How much CO₂ does carpooling save?</button>
+      <button class="sugg-btn" onclick="sendSuggestion(this.textContent)">⚡ What's the difference between A* and BFS?</button>
+      <button class="sugg-btn" onclick="sendSuggestion(this.textContent)">📱 What payment methods are supported?</button>
+    </div>
+
+    <div class="chat-sessions" id="chat-sessions-list">
+      <!-- sessions rendered by JS -->
+    </div>
+
+    <div class="chat-sidebar-footer">
+      <div class="rag-info-bar">
+        <span>📚</span>
+        <span id="rag-docs-count">— docs</span> in knowledge base ·
+        <span id="rag-model-badge">claude-sonnet-4-6</span>
+      </div>
+      <button class="btn bline" style="font-size:.69rem;padding:5px 9px" onclick="clearCurrentSession()">🗑 Clear Chat History</button>
+    </div>
+  </div>
+
+  <!-- Main chat area -->
+  <div class="chat-main">
+    <div class="chat-header">
+      <div class="chat-avatar">🤖</div>
+      <div class="chat-header-info">
+        <div class="chat-header-name">RideBot — AI Assistant</div>
+        <div class="chat-header-sub" id="chat-header-sub">RAG-powered · Grounded in RideKaro knowledge base · claude-sonnet-4-6</div>
+      </div>
+      <div class="chat-header-actions">
+        <button class="chat-action-btn" onclick="exportChat()">⬇ Export</button>
+        <button class="chat-action-btn" onclick="startNewSession()">+ New</button>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <!-- Empty state -->
+      <div class="chat-empty" id="chat-empty-state">
+        <div class="chat-empty-icon">🤖</div>
+        <div class="chat-empty-title">Ask RideBot anything</div>
+        <div class="chat-empty-sub">
+          I'm powered by RAG (Retrieval-Augmented Generation) — I search a knowledge base of
+          Karachi traffic, safety guidelines, pricing rules, platform how-tos, and AI/ML explanations,
+          then answer using Claude claude-sonnet-4-6 with live platform statistics.
+        </div>
+        <div class="quick-actions">
+          <button class="quick-btn" onclick="sendSuggestion('How do I book a ride?')">📍 Book a ride</button>
+          <button class="quick-btn" onclick="sendSuggestion('What are rush hour times in Karachi?')">🚦 Rush hours</button>
+          <button class="quick-btn" onclick="sendSuggestion('How much will my ride cost?')">💰 Fare estimate</button>
+          <button class="quick-btn" onclick="sendSuggestion('Is it safe to ride at night?')">🌙 Night safety</button>
+          <button class="quick-btn" onclick="sendSuggestion('How does the AI matching work?')">🤖 AI explained</button>
+          <button class="quick-btn" onclick="sendSuggestion('What is A* algorithm?')">⚡ A* algorithm</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="chat-input-wrap">
+        <textarea
+          class="chat-textarea"
+          id="chat-input"
+          placeholder="Ask about routes, safety, fares, algorithms, how-to… (Enter to send, Shift+Enter for newline)"
+          rows="1"
+          maxlength="1000"
+          oninput="autoResize(this);updateCharCount()"
+          onkeydown="handleChatKey(event)"
+        ></textarea>
+        <button class="chat-send-btn" id="chat-send-btn" onclick="sendMessage()" title="Send message">
+          ➤
+        </button>
+      </div>
+      <div class="chat-input-footer">
+        <span>🔍 RAG retrieves from <strong id="footer-doc-count">—</strong> knowledge docs · Grounded answers · No hallucination on platform facts</span>
+        <span class="char-count" id="char-count">0/1000</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  RIDEBOT AI CHAT — RAG-powered
+// ═══════════════════════════════════════════════════════════
+
+let _chatSessionId = 'session_' + Date.now();
+let _chatHistory = [];   // [{role, content, sources, ts}]
+let _chatStreaming = false;
+let _ragReady = false;
+
+// ── INIT ─────────────────────────────────────────────────────
+async function initChat() {
+  await checkRagStatus();
+  renderSessionsList();
+}
+
+async function checkRagStatus() {
+  const d = await api('/api/rag/status');
+  const dot = document.getElementById('rag-dot');
+  const txt = document.getElementById('rag-status-text');
+  const cnt = document.getElementById('rag-docs-count');
+  const footer = document.getElementById('footer-doc-count');
+
+  if (d.ready) {
+    _ragReady = true;
+    dot.className = 'rag-dot ready';
+    txt.textContent = 'RAG ready · FAISS index loaded';
+    const n = d.doc_count || 0;
+    if (cnt) cnt.textContent = `${n} docs`;
+    if (footer) footer.textContent = n;
+  } else {
+    _ragReady = false;
+    dot.className = 'rag-dot loading';
+    txt.textContent = 'Building vector index…';
+    setTimeout(checkRagStatus, 1500);
+  }
+}
+
+// ── SESSIONS ─────────────────────────────────────────────────
+function renderSessionsList() {
+  const list = document.getElementById('chat-sessions-list');
+  if (!_chatHistory.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:.7rem;padding:10px">No messages yet in this session</div>';
+    return;
+  }
+  const firstUser = _chatHistory.find(m => m.role === 'user');
+  const preview   = firstUser ? firstUser.content.slice(0, 45) + '…' : 'Empty session';
+  list.innerHTML = `
+    <div class="chat-session-item active">
+      <div class="chat-session-name">Current session</div>
+      <div class="chat-session-preview">${preview}</div>
+      <div class="chat-session-time">${_chatHistory.length} messages</div>
+    </div>`;
+}
+
+async function startNewSession() {
+  const r = await api('/api/rag/new_session', 'POST');
+  _chatSessionId = r.session_id || ('session_' + Date.now());
+  _chatHistory = [];
+  document.getElementById('chat-messages').innerHTML = '';
+  document.getElementById('chat-empty-state') && (document.getElementById('chat-messages').innerHTML = `
+    <div class="chat-empty" id="chat-empty-state">
+      <div class="chat-empty-icon">🤖</div>
+      <div class="chat-empty-title">Ask RideBot anything</div>
+      <div class="chat-empty-sub">I'm powered by RAG — I search a knowledge base of Karachi traffic, safety, pricing, platform how-tos, and AI/ML explanations, then answer using Claude claude-sonnet-4-6.</div>
+      <div class="quick-actions">
+        <button class="quick-btn" onclick="sendSuggestion('How do I book a ride?')">📍 Book a ride</button>
+        <button class="quick-btn" onclick="sendSuggestion('What are rush hour times in Karachi?')">🚦 Rush hours</button>
+        <button class="quick-btn" onclick="sendSuggestion('How much will my ride cost?')">💰 Fare estimate</button>
+        <button class="quick-btn" onclick="sendSuggestion('Is it safe to ride at night?')">🌙 Night safety</button>
+        <button class="quick-btn" onclick="sendSuggestion('How does the AI matching work?')">🤖 AI explained</button>
+      </div>
+    </div>`);
+  renderSessionsList();
+  toast('New conversation started', 'i');
+}
+
+async function clearCurrentSession() {
+  await api('/api/rag/clear', 'POST', {session_id: _chatSessionId});
+  _chatHistory = [];
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = '<div class="chat-empty"><div class="chat-empty-icon">🤖</div><div class="chat-empty-title">Conversation cleared</div><div class="chat-empty-sub">Start a new question below.</div></div>';
+  renderSessionsList();
+  toast('Chat history cleared', 'i');
+}
+
+// ── SEND MESSAGE ─────────────────────────────────────────────
+function sendSuggestion(text) {
+  document.getElementById('chat-input').value = text;
+  sendMessage();
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function updateCharCount() {
+  const inp = document.getElementById('chat-input');
+  const cc  = document.getElementById('char-count');
+  if (cc) cc.textContent = (inp.value.length) + '/1000';
+}
+
+async function sendMessage() {
+  if (_chatStreaming) return;
+  const inp   = document.getElementById('chat-input');
+  const query = inp.value.trim();
+  if (!query) return;
+
+  // Remove empty state
+  const emptyState = document.getElementById('chat-empty-state');
+  if (emptyState) emptyState.remove();
+
+  // Append user message
+  appendMessage('user', query, [], Date.now());
+  _chatHistory.push({role:'user', content:query, ts: Date.now()});
+  inp.value = '';
+  inp.style.height = 'auto';
+  updateCharCount();
+
+  // Show typing indicator
+  const typingId = showTyping();
+  _chatStreaming = true;
+  document.getElementById('chat-send-btn').disabled = true;
+
+  try {
+    await streamResponse(query, typingId);
+  } catch (e) {
+    removeTyping(typingId);
+    appendMessage('bot', '⚠️ Error: ' + e.message + '. Please check your API key in the server environment.', [], Date.now());
+    _chatStreaming = false;
+    document.getElementById('chat-send-btn').disabled = false;
+  }
+
+  renderSessionsList();
+}
+
+async function streamResponse(query, typingId) {
+  const response = await fetch('/api/rag/stream', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({query, session_id: _chatSessionId})
+  });
+
+  if (!response.ok) {
+    throw new Error('Network error: ' + response.status);
+  }
+
+  const reader  = response.body.getReader();
+  const decoder = new TextDecoder();
+  let sources   = [];
+  let botText   = '';
+  let msgEl     = null;
+  let removed   = false;
+
+  while (true) {
+    const {done, value} = await reader.read();
+    if (done) break;
+
+    const lines = decoder.decode(value).split('\n');
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      try {
+        const evt = JSON.parse(line.slice(6));
+
+        if (evt.type === 'sources') {
+          sources = evt.docs || [];
+        }
+
+        if (evt.type === 'token') {
+          if (!removed) {
+            removeTyping(typingId);
+            removed = true;
+            msgEl = appendStreamingMessage('bot');
+          }
+          botText += evt.content;
+          updateStreamingMessage(msgEl, botText);
+        }
+
+        if (evt.type === 'done') {
+          if (msgEl) finaliseStreamingMessage(msgEl, botText, sources);
+          _chatHistory.push({role:'bot', content:botText, sources, ts: Date.now()});
+          _chatStreaming = false;
+          document.getElementById('chat-send-btn').disabled = false;
+        }
+
+        if (evt.type === 'error') {
+          if (!removed) { removeTyping(typingId); removed = true; }
+          const errText = evt.content.includes('api_key') || evt.content.includes('auth')
+            ? '🔑 API key not configured. Please set ANTHROPIC_API_KEY environment variable on the server to enable AI responses.'
+            : '⚠️ ' + evt.content;
+          appendMessage('bot', errText, [], Date.now());
+          _chatStreaming = false;
+          document.getElementById('chat-send-btn').disabled = false;
+        }
+      } catch(parseErr) { /* skip malformed */ }
+    }
+  }
+
+  // Safety net if stream ended without 'done' event
+  if (_chatStreaming) {
+    _chatStreaming = false;
+    document.getElementById('chat-send-btn').disabled = false;
+  }
+}
+
+// ── MESSAGE RENDERING ─────────────────────────────────────────
+function appendMessage(role, content, sources, ts) {
+  const msgs = document.getElementById('chat-messages');
+  const el   = document.createElement('div');
+  el.className = `msg ${role}`;
+  const timeStr = new Date(ts).toLocaleTimeString('en-PK', {hour:'2-digit',minute:'2-digit'});
+  const srcHtml = sources?.length
+    ? `<div class="msg-sources">${sources.map(s=>`<span class="src-pill" title="Relevance: ${s.score}">📄 ${s.title}</span>`).join('')}</div>`
+    : '';
+  const avatarEl = role === 'bot'
+    ? `<div class="msg-avatar bot">🤖</div>`
+    : `<div class="msg-avatar user">👤</div>`;
+
+  el.innerHTML = `
+    ${avatarEl}
+    <div class="msg-content">
+      <div class="msg-bubble ${role}">${formatMessage(content)}</div>
+      ${srcHtml}
+      <div class="msg-meta">${timeStr}${role==='bot' ? ' · RAG-grounded' : ''}</div>
+    </div>`;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  return el;
+}
+
+function appendStreamingMessage(role) {
+  const msgs = document.getElementById('chat-messages');
+  const el   = document.createElement('div');
+  el.className = `msg ${role}`;
+  el.innerHTML = `
+    <div class="msg-avatar bot">🤖</div>
+    <div class="msg-content">
+      <div class="msg-bubble bot" id="streaming-bubble"></div>
+    </div>`;
+  msgs.appendChild(el);
+  return el;
+}
+
+function updateStreamingMessage(el, text) {
+  const bubble = el.querySelector('#streaming-bubble');
+  if (bubble) {
+    bubble.innerHTML = formatMessage(text) + '<span style="animation:pulse 1s infinite;color:var(--teal)">▋</span>';
+    el.parentElement.scrollTop = el.parentElement.scrollHeight;
+  }
+}
+
+function finaliseStreamingMessage(el, text, sources) {
+  const bubble = el.querySelector('#streaming-bubble');
+  if (bubble) {
+    bubble.removeAttribute('id');
+    bubble.innerHTML = formatMessage(text);
+  }
+  const timeStr = new Date().toLocaleTimeString('en-PK', {hour:'2-digit',minute:'2-digit'});
+  const srcHtml = sources?.length
+    ? `<div class="msg-sources">${sources.map(s=>`<span class="src-pill" title="Relevance: ${s.score}">📄 ${s.title}</span>`).join('')}</div>`
+    : '';
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  meta.innerHTML = `${timeStr} · RAG-grounded`;
+  const srcEl = document.createElement('div');
+  srcEl.innerHTML = srcHtml;
+  el.querySelector('.msg-content').append(srcEl, meta);
+  el.parentElement.scrollTop = el.parentElement.scrollHeight;
+}
+
+function formatMessage(text) {
+  // Convert markdown-ish text to basic HTML for chat bubbles
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`(.+?)`/g,'<code>$1</code>')
+    .replace(/^### (.+)$/gm,'<strong style="font-size:.85rem;color:var(--teal)">$1</strong>')
+    .replace(/^## (.+)$/gm,'<strong style="font-size:.9rem">$1</strong>')
+    .replace(/^# (.+)$/gm,'<strong style="font-size:.95rem">$1</strong>')
+    .replace(/^\d+\. (.+)$/gm,'<div style="margin:2px 0">• $1</div>')
+    .replace(/^[-•] (.+)$/gm,'<div style="margin:2px 0">• $1</div>')
+    .replace(/\n\n/g,'</p><p style="margin:0 0 6px 0">').replace(/\n/g,'<br>')
+    .replace(/^(.+)$/, '<p style="margin:0">$1</p>');
+}
+
+function showTyping() {
+  const id   = 'typing_' + Date.now();
+  const msgs = document.getElementById('chat-messages');
+  const el   = document.createElement('div');
+  el.className = 'msg bot';
+  el.id = id;
+  el.innerHTML = `
+    <div class="msg-avatar bot">🤖</div>
+    <div class="msg-content">
+      <div class="typing-indicator">
+        <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+        <span style="font-size:.65rem;color:var(--muted);margin-left:4px">Searching knowledge base…</span>
+      </div>
+    </div>`;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ── EXPORT ────────────────────────────────────────────────────
+function exportChat() {
+  if (!_chatHistory.length) { toast('No messages to export', 'w'); return; }
+  let txt = 'RideKaro RideBot Chat Export\n';
+  txt += '================================\n';
+  txt += `Session: ${_chatSessionId}\n`;
+  txt += `Exported: ${new Date().toLocaleString()}\n\n`;
+  _chatHistory.forEach(m => {
+    const role = m.role === 'user' ? 'You' : 'RideBot';
+    txt += `[${role}]\n${m.content}\n\n`;
+  });
+  const blob = new Blob([txt], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ridebot_chat_${Date.now()}.txt`;
+  a.click();
+  toast('Chat exported', 's');
+}
+</script>
+
+</body>
+</html>
